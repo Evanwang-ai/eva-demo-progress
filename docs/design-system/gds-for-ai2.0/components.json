@@ -1,0 +1,388 @@
+{
+  "meta": {
+    "name": "Eva GDS for AI component contracts",
+    "version": "2.0.0",
+    "source": "Figma uglNwB9uiCqB1f5IdTKBM5",
+    "referenceViewport": "1200x800",
+    "contract": "Properties containing a brace-wrapped token path must resolve against tokens.json. Observed geometry is authoritative at the reference viewport."
+  },
+  "modes": {
+    "fidelity": {
+      "description": "视觉回归和演示使用原稿弱文字色。",
+      "mutedText": "{color.semantic.text.muted}"
+    },
+    "production": {
+      "description": "必要小字号信息采用可访问次文字色。",
+      "mutedTextForEssentialContent": "{color.semantic.text.secondaryAccessible}"
+    }
+  },
+  "pageStates": {
+    "home": {
+      "shell": "standardShell",
+      "required": ["sidebar", "hero", "scenarioRail", "composer.homeEmpty"],
+      "forbidden": ["conversationFlow", "skillPicker", "operationCard", "completedWorkspace"]
+    },
+    "input": {
+      "shell": "standardShell",
+      "required": ["sidebar", "hero", "scenarioRail", "composer.homeFilled", "skillMention"],
+      "forbidden": ["skillPicker", "operationCard", "completedWorkspace"]
+    },
+    "operation": {
+      "shell": "standardShell",
+      "required": ["sidebar", "hero", "scenarioRail", "composer.homeFilled", "operationCard"],
+      "forbidden": ["skillPicker", "completedWorkspace"]
+    },
+    "skillPicker": {
+      "shell": "standardShell",
+      "required": ["sidebar", "hero", "scenarioRail", "composer.skillQuery", "skillPicker"],
+      "forbidden": ["operationCard", "completedWorkspace"]
+    },
+    "generating": {
+      "shell": "standardShell",
+      "required": ["sidebar", "conversationHeader", "conversationFlow.generating", "composer.conversation"],
+      "forbidden": ["hero", "scenarioRail", "skillPicker", "resultArtifact", "completedWorkspace"]
+    },
+    "completed": {
+      "shell": "completedShell",
+      "required": ["completedConversation", "resultArtifact", "composer.completed", "completedWorkspace"],
+      "forbidden": ["sidebar", "hero", "scenarioRail", "skillPicker"]
+    }
+  },
+  "components": {
+    "standardShell": {
+      "evidence": "O",
+      "purpose": "首页、输入、技能选择、运营和生成中的共同桌面骨架。",
+      "anatomy": ["window", "sidebar", "workspace"],
+      "geometry": {
+        "window": { "width": "{layout.viewport.width}", "height": "{layout.viewport.height}" },
+        "sidebarWidth": "{layout.standardShell.sidebarWidth}",
+        "workspaceWidth": "{layout.standardShell.workspaceWidth}",
+        "mainColumnWidth": "{layout.standardShell.mainColumnWidth}"
+      },
+      "tokens": {
+        "windowBackground": "{color.semantic.surface.primary}",
+        "windowRadius": "{radius.window}"
+      },
+      "rules": [
+        "At 1200x800, sidebar and workspace must total exactly 1200px.",
+        "Clip all children to the 20px window radius.",
+        "Do not use this shell for the completed state."
+      ]
+    },
+    "completedShell": {
+      "evidence": "O",
+      "purpose": "结果已完成后的对话与编辑双栏骨架。",
+      "anatomy": ["completedConversation", "completedWorkspace"],
+      "geometry": {
+        "conversationWidth": "{layout.completedShell.conversationWidth}",
+        "editorWidth": "{layout.completedShell.editorWidth}",
+        "height": "{layout.viewport.height}"
+      },
+      "rules": [
+        "Use 390/810 columns; never nest the 260px standard sidebar.",
+        "Keep a 1px subtle divider between columns."
+      ]
+    },
+    "sidebar": {
+      "evidence": "O",
+      "purpose": "应用身份、主导航、历史和账号入口。",
+      "anatomy": ["diffuseBackdrop", "glassLayer", "trafficLights", "brandHeader", "primaryNav", "historyTabs", "historyList", "accountRow"],
+      "geometry": {
+        "background": "{component.sidebar.background}",
+        "trafficLight": "{component.sidebar.trafficLight}",
+        "header": "{component.sidebar.header}",
+        "navStartY": "{component.sidebar.navStartY}",
+        "account": "{component.sidebar.account}"
+      },
+      "tokens": {
+        "glassFill": "{color.semantic.surface.glass}",
+        "border": "{color.semantic.border.subtle}",
+        "blur": "{blur.glass}",
+        "radius": "{radius.panel}",
+        "labelTypography": "{typography.style.label}"
+      },
+      "variants": {
+        "default": "selected primary nav row plus history list",
+        "withOperation": "default plus operationCard over the history region"
+      },
+      "contentRules": [
+        "History entries are single-line and truncate.",
+        "Account avatar is replaceable user content, not a brand asset.",
+        "The diffuse backdrop must contain no legible private information."
+      ],
+      "accessibility": ["Every icon-only action has an accessible name.", "Navigation selected state is exposed semantically."],
+      "prohibitions": ["No solid brand-blue sidebar.", "No raw screenshot as a visible backdrop."]
+    },
+    "hero": {
+      "evidence": "O",
+      "purpose": "建立 Eva 的情绪与品牌识别。",
+      "anatomy": ["title", "dotField", "speechBubble", "mascot"],
+      "geometry": {
+        "title": "{component.hero.title}",
+        "mascot": "{component.hero.mascot}",
+        "dotField": "{component.hero.dotField}"
+      },
+      "tokens": {
+        "titleTypography": "{typography.style.heroTitle}",
+        "titleColor": "{color.semantic.text.strong}",
+        "dotColor": "{color.semantic.decoration.dot}",
+        "bubbleColor": "{color.semantic.action.primary}",
+        "bubbleTypography": "{typography.style.mascot}"
+      },
+      "assets": ["assets/brand/eva-wave.png"],
+      "rules": ["Position mascot and dot field independently from text flow.", "Keep the title on one line."],
+      "prohibitions": ["Do not recolor the mascot.", "Do not replace the dotted halo with a gradient blob."]
+    },
+    "scenarioRail": {
+      "evidence": "O",
+      "purpose": "展示可直接发起的高频任务。",
+      "anatomy": ["horizontalViewport", "scenarioChip[]"],
+      "geometry": {
+        "x": "{component.scenarioRail.x}",
+        "y": "{component.scenarioRail.y}",
+        "height": "{component.scenarioRail.height}",
+        "gap": "{component.scenarioRail.gap}",
+        "padding": "{component.scenarioRail.padding}"
+      },
+      "tokens": {
+        "background": "{color.semantic.surface.primary}",
+        "border": "{color.semantic.border.default}",
+        "radius": "{radius.chip}",
+        "typography": "{typography.style.chip}"
+      },
+      "states": {
+        "default": "white background and 0.5px default border",
+        "hover": "recommended subtle surface fill",
+        "focusVisible": "recommended 2px primary focus ring"
+      },
+      "contentRules": ["Single line only.", "Overflow scrolls or clips horizontally; never wrap."],
+      "prohibitions": ["No filled colorful pills.", "No multiline chip label."]
+    },
+    "composer": {
+      "evidence": "O",
+      "purpose": "接收用户提示、技能提及和输入操作。",
+      "anatomy": ["optionalWrapper", "panel", "promptArea", "actionRow", "addButton", "modelSelector", "micButton", "sendButton", "optionalQuickSkills"],
+      "geometry": {
+        "homeWrapper": "{component.composer.homeWrapper}",
+        "homePanel": "{component.composer.homePanel}",
+        "conversationPanel": "{component.composer.conversationPanel}",
+        "completedPanel": "{component.composer.completedPanel}",
+        "promptAreaHeight": "{component.composer.promptAreaHeight}",
+        "actionAreaHeight": "{component.composer.actionAreaHeight}",
+        "roundButtonSize": "{component.composer.roundButtonSize}"
+      },
+      "tokens": {
+        "wrapperBackground": "{color.semantic.surface.subtle}",
+        "panelBackground": "{color.semantic.surface.primary}",
+        "panelRadius": "{radius.panel}",
+        "wrapperRadius": "{radius.window}",
+        "shadow": "{shadow.floating}",
+        "hairline": "{shadow.hairline}",
+        "blur": "{blur.floating}",
+        "bodyTypography": "{typography.style.body}",
+        "sendEnabled": "{color.semantic.action.primary}",
+        "sendDisabled": "{color.semantic.action.disabledFill}"
+      },
+      "variants": {
+        "homeEmpty": {
+          "wrapper": true,
+          "quickSkills": true,
+          "send": "disabled",
+          "geometry": "home"
+        },
+        "homeFilled": {
+          "wrapper": true,
+          "quickSkills": true,
+          "send": "enabled",
+          "geometry": "home"
+        },
+        "skillQuery": {
+          "wrapper": true,
+          "quickSkills": true,
+          "send": "disabled unless valid prompt exists",
+          "geometry": "home"
+        },
+        "conversation": {
+          "wrapper": false,
+          "quickSkills": false,
+          "geometry": "conversation"
+        },
+        "completed": {
+          "wrapper": false,
+          "quickSkills": false,
+          "geometry": "completed"
+        }
+      },
+      "contentRules": ["Skill mention and user text share one baseline.", "Prompt area grows internally only when product behavior specifies it; fixed reference remains 118px."],
+      "accessibility": ["Enter submits when valid; Shift+Enter inserts a line break.", "Disabled send is programmatically disabled.", "Buttons expose accessible names."],
+      "prohibitions": ["No default textarea border.", "No quick-skill strip in conversation variants."]
+    },
+    "skillMention": {
+      "evidence": "O",
+      "purpose": "在输入和用户消息中标识被调用的技能。",
+      "anatomy": ["skillIcon", "skillName"],
+      "tokens": {
+        "iconColor": "{color.semantic.action.primary}",
+        "textColor": "{color.semantic.action.primary}",
+        "typography": "{typography.style.bodyMedium}",
+        "gap": "{space.1_5}"
+      },
+      "contentRules": ["Keep on one line.", "Use the canonical skill name, preserving intended capitalization."],
+      "prohibitions": ["Do not render as a filled badge."]
+    },
+    "skillPicker": {
+      "evidence": "O",
+      "purpose": "通过 @ 查询并选择技能。",
+      "anatomy": ["panel", "header", "count", "list", "skillRow[]"],
+      "geometry": {
+        "frame": { "x": "{component.skillPicker.x}", "y": "{component.skillPicker.y}", "width": "{component.skillPicker.width}", "height": "{component.skillPicker.height}" },
+        "headerHeight": "{component.skillPicker.headerHeight}",
+        "rowHeight": "{component.skillPicker.rowHeight}",
+        "rowPadding": "{component.skillPicker.rowPadding}"
+      },
+      "tokens": {
+        "background": "{color.semantic.surface.primary}",
+        "radius": "{radius.panel}",
+        "shadow": "{shadow.floating}",
+        "hairline": "{shadow.hairline}",
+        "blur": "{blur.floating}",
+        "titleTypography": "{typography.style.labelMedium}",
+        "rowTypography": "{typography.style.label}",
+        "mutedColor": "{color.semantic.text.muted}"
+      },
+      "states": {
+        "defaultRow": "transparent",
+        "hoverRow": "recommended subtle surface",
+        "activeRow": "recommended subtle surface plus semantic active descendant",
+        "empty": "recommended fixed-height empty message",
+        "loading": "recommended fixed-height rows or progress message"
+      },
+      "contentRules": ["Description truncates on one line.", "The count reflects the result set.", "Visible reference shows six rows of eight total."],
+      "accessibility": ["Use combobox/listbox semantics.", "Arrow keys move active row; Enter selects; Escape closes."],
+      "prohibitions": ["Do not overlap the composer.", "Do not expand row height for long descriptions."]
+    },
+    "operationCard": {
+      "evidence": "O",
+      "purpose": "在侧栏内显示可关闭的临时运营信息。",
+      "anatomy": ["image", "dismissButton", "copy", "cta"],
+      "geometry": {
+        "frame": { "x": "{component.operationCard.x}", "y": "{component.operationCard.y}", "width": "{component.operationCard.width}", "height": "{component.operationCard.height}" },
+        "image": "{component.operationCard.image}",
+        "cta": "{component.operationCard.cta}"
+      },
+      "tokens": {
+        "background": "{color.semantic.surface.primary}",
+        "radius": "{radius.chip}",
+        "shadow": "{shadow.floating}",
+        "copyTypography": "{typography.style.label}",
+        "ctaTypography": "{typography.style.labelMedium}",
+        "ctaBackground": "{color.semantic.action.dark}",
+        "ctaText": "{color.semantic.text.inverse}"
+      },
+      "assets": ["assets/content/operation-card.png"],
+      "states": { "visible": "render above sidebar history", "dismissed": "remove without reflowing original history layout" },
+      "accessibility": ["Visual 22px dismiss button uses at least a 32px hit area.", "Image alt text is empty when copy repeats its meaning."],
+      "prohibitions": ["Do not make the entire card brand blue.", "Do not push navigation rows out of their reference positions."]
+    },
+    "conversationHeader": {
+      "evidence": "O",
+      "purpose": "生成中任务的标题与窗口操作。",
+      "anatomy": ["taskTypeIcon", "title", "moreButton", "sidebarButton"],
+      "geometry": { "height": "{layout.standardShell.topbarHeight}" },
+      "tokens": {
+        "background": "{color.semantic.surface.primary}",
+        "typography": "{typography.style.header}",
+        "textColor": "{color.semantic.text.strong}"
+      },
+      "contentRules": ["Title is one line and truncates before actions."],
+      "prohibitions": ["Do not wrap title."]
+    },
+    "conversationFlow": {
+      "evidence": "O",
+      "purpose": "展示用户请求、助理正文和工具执行事件。",
+      "anatomy": ["userPrompt", "timestamp", "assistantBody", "toolEvent[]"],
+      "geometry": {
+        "standard": "{component.conversation.standard}",
+        "paragraphGap": "{component.conversation.paragraphGap}"
+      },
+      "tokens": {
+        "bodyTypography": "{typography.style.body}",
+        "bodyColor": "{color.semantic.text.primary}",
+        "statusTypography": "{typography.style.label}",
+        "statusColor": "{color.semantic.text.muted}",
+        "userPromptBackground": "{color.semantic.surface.subtle}"
+      },
+      "variants": {
+        "generating": {
+          "allowedToolStates": ["queued", "running", "success", "error"],
+          "mustHide": ["resultArtifact", "completedActions", "completedWorkspace"]
+        },
+        "completed": {
+          "required": ["resultArtifact", "completedActions"]
+        }
+      },
+      "contentRules": ["Render only events that have actually occurred.", "Assistant content is a document flow, not a stack of full-width chat bubbles."],
+      "accessibility": ["Use aria-live=polite for new status events without stealing focus."],
+      "prohibitions": ["Never surface hidden Figma layers as current process output."]
+    },
+    "resultArtifact": {
+      "evidence": "O",
+      "purpose": "呈现已生成文件及后续动作。",
+      "anatomy": ["fileIcon", "metadata", "openOrDownloadAction"],
+      "geometry": "{component.conversation.artifactCard}",
+      "tokens": {
+        "background": "{color.semantic.surface.primary}",
+        "border": "{color.semantic.border.subtle}",
+        "radius": "{radius.panel}",
+        "titleTypography": "{typography.style.labelMedium}",
+        "metaTypography": "{typography.style.caption}"
+      },
+      "contentRules": ["Filename truncates before the trailing action.", "File type and status remain readable."],
+      "prohibitions": ["Do not show before generation succeeds."]
+    },
+    "completedConversation": {
+      "evidence": "O",
+      "purpose": "在窄栏中保留任务上下文和结果动作。",
+      "anatomy": ["topbar", "scrollArea", "userPrompt", "assistantBody", "resultArtifact", "composer.completed"],
+      "geometry": "{component.conversation.completed}",
+      "tokens": {
+        "background": "{color.semantic.surface.primary}"
+      },
+      "rules": ["Use 20px content insets and 350px content width.", "Reserve 132px at the bottom for the composer container."]
+    },
+    "completedWorkspace": {
+      "evidence": "O",
+      "purpose": "展示并编辑生成的 PPT。",
+      "anatomy": ["editorTabs", "fileHeader", "slideRail", "editorToolbar", "canvasViewport", "presentationCanvas", "statusbar"],
+      "geometry": {
+        "editor": { "x": "{component.editor.x}", "width": "{component.editor.width}" },
+        "tabbar": "{component.editor.tabbar}",
+        "fileHeader": "{component.editor.fileHeader}",
+        "slideRail": "{component.editor.slideRail}",
+        "slideRow": "{component.editor.slideRow}",
+        "canvasColumn": "{component.editor.canvasColumn}",
+        "toolbar": "{component.editor.toolbar}",
+        "viewport": "{component.editor.viewport}",
+        "canvas": "{component.editor.canvas}",
+        "statusbar": "{component.editor.statusbar}"
+      },
+      "tokens": {
+        "surface": "{color.semantic.surface.primary}",
+        "workSurface": "{color.semantic.surface.subtle}",
+        "paper": "{color.semantic.surface.paper}",
+        "divider": "{color.semantic.border.subtle}",
+        "canvasBorder": "{color.semantic.border.default}",
+        "selectedBorder": "{color.semantic.action.primary}",
+        "canvasShadow": "{shadow.canvas}"
+      },
+      "states": {
+        "selectedTab": "36px high, 8px radius, subtle surface",
+        "selectedSlide": "1px primary border",
+        "unselectedSlide": "1px default border"
+      },
+      "contentRules": ["Slide content is replaceable task output.", "Canvas and thumbnails preserve 16:9 ratio.", "Rail scrolls vertically without resizing rows."],
+      "accessibility": ["Tabs use tab semantics.", "Slide rail supports keyboard selection.", "Toolbar buttons have accessible names and selected states where applicable."],
+      "prohibitions": ["No non-uniform scaling of slides.", "No extra drop shadow on selected thumbnails."]
+    }
+  }
+}

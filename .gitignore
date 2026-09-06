@@ -9,4 +9,6 @@ artifacts/
 *.log
 *.tmp
 .DS_Store
+__MACOSX/
+._*
 Thumbs.db

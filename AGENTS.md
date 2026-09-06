@@ -134,7 +134,8 @@ git diff --check
 
 ## 客户设计规范
 
-- 客户提供的设计规范源为 `gds-for-ai2.0.zip`（Eva GDS for AI 2.0）。它是个人 Eva 桌面体验的设计依据；AionUI 和常见 AI 聊天产品都不能替代该规范。
+- 规范已随仓库保存在 `docs/design-system/gds-for-ai2.0/`。开始 UI 改动前先阅读该目录的 `README.md`、`design.md`、token、组件定义和对应参考图，并运行目录内的 `validate.mjs`。
+- 客户提供的现行规范为 Eva GDS for AI 2.0，仓库内文件是原始规范包的完整可用内容（已排除 macOS 系统元数据）。它是个人 Eva 桌面体验的设计依据；AionUI 和常见 AI 聊天产品都不能替代该规范。
 - GDS 的核心工程材料包括 `design.md`、`tokens.dtcg.json`、`tokens.json`、`components.json`、`validate.mjs` 以及 `assets/reference/` 六个状态参考图。实施相关页面前必须同时核对规范、语义 token、组件合同和对应状态截图，不能只看一张图近似手搓。
 - 当前 GDS 已验证的基准是 1200 × 800 桌面视口；个人 Eva 常规态使用 260/940 骨架、776 px 居中主列，主色为 `#1563EB`，圆角按 8/12/16/20 分级。生成中与完成态属于同一任务生命周期，不得拆成彼此无关的平行页面。
 - GDS 的适用范围是个人 Eva 体验。团队 IM 仍以 Octo-Web 成熟 IM 能力为标准；Eva 自有且需长期维护的通用界面优先复用现有封装或 Semi UI。三者边界不得混淆。
