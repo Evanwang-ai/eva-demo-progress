@@ -276,47 +276,8 @@
     }
   });
 
-  function syncPersonalAssistantNav() {
-    var row = document.querySelector('aside [data-eva-my-assistant-identity="true"]');
-    var label = row && Array.from(row.querySelectorAll('span')).find(function (span) {
-      return span.children.length === 0 && (directText(span) === 'Eva 同学' || directText(span) === '我的AI');
-    });
-    if (!row) {
-      label = Array.from(document.querySelectorAll('aside span')).find(function (span) {
-        return directText(span) === 'Eva 同学';
-      });
-      row = label && label.closest('.h-34px');
-      if (!row) return;
-      var iconSlot = Array.from(row.querySelectorAll('span')).find(function (span) {
-        return span !== label && span.querySelector('svg');
-      });
-      if (!iconSlot) return;
-      iconSlot.replaceChildren(createEvaLogoAvatar('nav'));
-      row.dataset.evaMyAssistantIdentity = 'true';
-    }
-
-    var personalLabel = 'Eva 同学';
-    if (label) label.textContent = personalLabel;
-    row.setAttribute('aria-label', personalLabel);
-    row.setAttribute('title', personalLabel);
-    var avatar = row.querySelector('.eva-identity-avatar');
-    if (avatar) avatar.setAttribute('aria-label', personalLabel);
-
-    var myAiNav = document.getElementById('eva-my-avatar-nav');
-    if (myAiNav) {
-      myAiNav.setAttribute('aria-label', '我的AI');
-      myAiNav.setAttribute('title', '我的AI');
-      var myAiSurface = myAiNav.firstElementChild;
-      if (myAiSurface) {
-        myAiSurface.setAttribute('aria-label', '我的AI');
-        myAiSurface.setAttribute('title', '我的AI');
-      }
-    }
-  }
-
   function tuneMessageView() {
     document.body.classList.add('eva-message-hierarchy-ready');
-    syncPersonalAssistantNav();
     buildSpaceTree();
     syncSpaceTreeSelection();
     tuneDriveView();
@@ -459,4 +420,3 @@
     subtree: true
   });
 })();
-

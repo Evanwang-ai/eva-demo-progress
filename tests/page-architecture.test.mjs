@@ -42,6 +42,61 @@ test('侧栏模式和唯一选中态完全由路由推导', () => {
   assert.doesNotMatch(source, /__evaSidebarOverlayNavId|eva:sidebar-select/);
 });
 
+test('个人 Eva 主入口进入个人三栏页且加号仅作提示', () => {
+  const { source } = createPatchedRuntime();
+  const hierarchy = read('prototype/021-message-hierarchy.js');
+  const personalColumns = read('prototype/042-personal-conversation-columns.js');
+
+  assert.match(source, /EvaPersonalEntry=/);
+  assert.match(source, /className:"eva-personal-entry__plus","aria-hidden":"true"/);
+  assert.match(source, /case"new-chat":return React\.createElement\(EvaPersonalEntry,/);
+  assert.match(source, /onClick:\(\)=>rt\.navigate\("\/guid"\)/);
+  assert.doesNotMatch(source, /case"new-chat":return[^;]+SiderToolbar/);
+  assert.doesNotMatch(hierarchy, /syncPersonalAssistantNav/);
+  assert.match(personalColumns, /#\/guid/);
+});
+
+test('个人 Eva 中栏与团队我的 AI 共用双操作顶部结构', () => {
+  const personalColumns = read('prototype/042-personal-conversation-columns.js');
+  const imPatch = read('prototype/009-5-patch-im.js');
+
+  assert.match(imPatch, /eva-my-ai-sidebar-actions/);
+  assert.match(personalColumns, /eva-my-ai-sidebar-actions eva-personal-sidebar-actions/);
+  assert.match(personalColumns, /eva-my-ai-sidebar-actions__create-assistant/);
+  assert.match(personalColumns, />创建助理<\/button>/);
+  assert.match(personalColumns, /personalPlusIcon\.cloneNode\(true\)/);
+  assert.match(personalColumns, /eva-my-ai-sidebar-actions__new-session/);
+  assert.match(personalColumns, />新建对话<\/button>/);
+  assert.doesNotMatch(personalColumns, /eva-personal-assistant-heading/);
+});
+
+test('个人助理使用 Brain 身份图标且整行提供 Hover', () => {
+  const { source } = createPatchedRuntime();
+  const personalColumns = read('prototype/042-personal-conversation-columns.js');
+  const convergence = read('prototype/043-final-layout-convergence.css');
+
+  assert.match(source, /eva-personal-assistant-icon-template/);
+  assert.match(source, /React\.createElement\(Brain\$8,/);
+  assert.match(personalColumns, /eva-personal-assistant-icon-template svg/);
+  assert.doesNotMatch(personalColumns, /chat-history__item > span\.size-22px/);
+  assert.match(convergence, /eva-personal-assistant-folder__row:hover\s*\{[^}]*background:\s*#e2e3e5/s);
+  assert.match(convergence, /eva-personal-assistant-folder__row:hover\s+\.eva-assistant-folder__button\s*\{[^}]*background:\s*transparent/s);
+  assert.match(convergence, /eva-assistant-conversation:hover\s*\{[^}]*background:\s*#e2e3e5/s);
+});
+
+test('创建和编辑助理共用编辑器并按模式新增或原位更新', () => {
+  const personalColumns = read('prototype/042-personal-conversation-columns.js');
+  const convergence = read('prototype/044-final-layout-convergence.js');
+
+  assert.match(personalColumns, /data-eva-edit-assistant/);
+  assert.match(personalColumns, /window\.__evaSavePersonalAssistant/);
+  assert.match(convergence, /function openAssistantEditor\(options\)/);
+  assert.match(convergence, /mode:\s*'create'/);
+  assert.match(convergence, /mode:\s*'edit'/);
+  assert.match(convergence, /data-eva-assistant-editor-mode/);
+  assert.match(convergence, /__evaSavePersonalAssistant/);
+});
+
 test('一级页面只挂入路由宿主，不再追加到 document.body', () => {
   const files = [
     'prototype/020-mode-layer.js',

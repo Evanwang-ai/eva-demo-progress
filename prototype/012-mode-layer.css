@@ -39,7 +39,7 @@
 .eva-space-picker__trigger:focus-visible,
 .eva-space-picker__option:focus-visible,
 .eva-layer-nav:focus-visible,
-.eva-compact-assistant:focus-visible,
+.eva-personal-entry__main:focus-visible,
 .eva-drive button:focus-visible,
 .eva-drive input:focus-visible {
   outline: 2px solid var(--semi-color-primary, #6a5cff);
@@ -409,48 +409,90 @@
   white-space: nowrap;
 }
 
-.eva-compact-assistant {
+.eva-personal-entry {
   box-sizing: border-box;
   width: 100%;
-  height: 56px;
-  padding: 5px 2px;
-  border: 0;
+  height: 38px;
   border-radius: 10px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
   color: var(--semi-color-text-0, #1c1f23);
   background: transparent;
-  font: inherit;
-  cursor: pointer;
+  transition: background-color 120ms ease;
 }
 
-.eva-compact-assistant:hover,
-.eva-compact-assistant.is-selected {
+.eva-personal-entry:hover,
+.eva-personal-entry.is-selected {
   background: #e2e3e5;
 }
 
-.eva-compact-assistant__label {
+.eva-personal-entry__main {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0 0 10px;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.eva-personal-entry__logo,
+.eva-personal-entry__logo img {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.eva-personal-entry__logo img {
+  display: block;
+  object-fit: contain;
+}
+
+.eva-personal-entry__label {
+  min-width: 0;
+  flex: 1 1 auto;
   max-width: 100%;
   overflow: hidden;
-  color: var(--semi-color-text-1, #4e5969);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.eva-compact-assistant__icon,
-.eva-compact-assistant__icon img {
-  width: 22px;
-  height: 22px;
+.eva-personal-entry__plus {
+  width: 34px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--semi-color-text-2, #8f959e);
+  pointer-events: none;
+  user-select: none;
 }
 
-.eva-compact-assistant__icon img {
-  display: block;
-  object-fit: contain;
+.eva-personal-entry.is-collapsed {
+  height: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+.eva-personal-entry.is-collapsed .eva-personal-entry__main {
+  width: 100%;
+  padding: 5px 2px;
+  justify-content: center;
+}
+
+.eva-personal-entry.is-collapsed .eva-personal-entry__label,
+.eva-personal-entry.is-collapsed .eva-personal-entry__plus {
+  display: none;
 }
 
 

@@ -79,10 +79,17 @@
     return layer;
   }
 
-  function openCreateAssistantModal() {
+  function openAssistantEditor(options) {
+    var settings = options || {};
+    var mode = settings.mode === 'edit' ? 'edit' : 'create';
     var layer = ensureCreateAssistantModal();
-    layer.hidden = false;
+    layer.setAttribute('data-eva-assistant-editor-mode', mode);
+    layer.dataset.evaAssistantId = settings.id || '';
     var input = layer.querySelector('input');
+    if (input) input.value = settings.name || '';
+    var submit = layer.querySelector('[data-eva-create-assistant-submit]');
+    if (submit) submit.textContent = mode === 'edit' ? '保存' : '创建';
+    layer.hidden = false;
     if (input) setTimeout(function () { input.focus(); }, 0);
   }
 
@@ -116,10 +123,17 @@
   }
 
   document.addEventListener('click', function (event) {
+    var editAssistant = event.target.closest('#eva-personal-history-column [data-eva-edit-assistant]');
+    if (editAssistant) {
+      event.preventDefault();
+      var folder = editAssistant.closest('[data-eva-assistant-id]');
+      openAssistantEditor({ mode: 'edit', id: folder.dataset.evaAssistantId, name: folder.dataset.evaAssistantName });
+      return;
+    }
     var createAssistant = event.target.closest('#eva-personal-history-column .eva-assistant-tree__create');
     if (createAssistant) {
       event.preventDefault();
-      openCreateAssistantModal();
+      openAssistantEditor({ mode: 'create' });
       return;
     }
     if (event.target.closest('[data-eva-create-assistant-close]') || event.target.id === 'eva-create-assistant-layer') {
@@ -144,7 +158,14 @@
       return;
     }
     if (event.target.closest('[data-eva-create-assistant-submit]')) {
-      closeCreateAssistantModal();
+      var editorLayer = ensureCreateAssistantModal();
+      var editorInput = editorLayer.querySelector('input');
+      var saved = window.__evaSavePersonalAssistant && window.__evaSavePersonalAssistant({
+        mode: editorLayer.getAttribute('data-eva-assistant-editor-mode'),
+        id: editorLayer.dataset.evaAssistantId,
+        name: editorInput && editorInput.value
+      });
+      if (saved) closeCreateAssistantModal();
       return;
     }
     var conversation = event.target.closest('#eva-personal-history-column .eva-assistant-conversation');

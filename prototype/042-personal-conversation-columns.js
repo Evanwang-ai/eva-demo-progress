@@ -5,6 +5,11 @@
   var historyNode = null;
   var historyDivider = null;
   var tuneQueued = false;
+  var personalAssistants = [
+    { id: 'assistant-general', name: '通用助理' },
+    { id: 'assistant-rd', name: 'Eva研发助理' }
+  ];
+  window.__EVA_PERSONAL_ASSISTANTS = personalAssistants;
   function sidebar() {
     return document.querySelector('aside.arco-layout-sider') || document.querySelector('aside');
   }
@@ -37,25 +42,24 @@
     return column;
   }
 
-  function assistantIcon(history) {
-    var source = history.querySelector('.chat-history__item > span.size-22px');
+  function assistantIcon() {
+    var source = document.querySelector('.eva-personal-assistant-icon-template svg');
     if (!source) return '<span aria-hidden="true">✦</span>';
     var clone = source.cloneNode(true);
-    clone.removeAttribute('class');
     clone.querySelectorAll('[id]').forEach(function (node) { node.removeAttribute('id'); });
-    return clone.innerHTML || '<span aria-hidden="true">✦</span>';
+    return clone.outerHTML || '<span aria-hidden="true">✦</span>';
   }
 
-  function personalFolderMarkup(name, index) {
+  function personalFolderMarkup(assistant, index) {
     return [
-      '<section class="eva-assistant-folder eva-personal-assistant-folder" data-eva-folder="', String(index), '">',
+      '<section class="eva-assistant-folder eva-personal-assistant-folder" data-eva-folder="', String(index), '" data-eva-assistant-id="', escapeText(assistant.id), '" data-eva-assistant-name="', escapeText(assistant.name), '">',
         '<div class="eva-personal-assistant-folder__row">',
           '<button class="eva-assistant-folder__button" type="button" aria-expanded="true">',
             '<span class="eva-assistant-folder__icon" aria-hidden="true"></span>',
-            '<span class="eva-assistant-folder__name">', name, '</span>',
+            '<span class="eva-assistant-folder__name">', escapeText(assistant.name), '</span>',
           '</button>',
           '<span class="eva-personal-assistant-folder__actions">',
-            '<button type="button" aria-label="更多操作">···</button>',
+            '<button type="button" aria-label="编辑', escapeText(assistant.name), '" data-eva-edit-assistant>···</button>',
             '<button class="eva-personal-assistant-folder__new-chat" type="button" aria-label="新建对话">＋</button>',
           '</span>',
         '</div>',
@@ -73,7 +77,9 @@
   function ensureAssistantTree(column) {
     var rows = historyNode ? Array.from(historyNode.querySelectorAll('.chat-history__item')).slice(0, 5) : [];
     if (!rows.length) return;
-    var signature = 'personal-v2:' + rows.map(function (row) {
+    var signature = 'personal-v3:' + personalAssistants.map(function (assistant) {
+      return assistant.id + ':' + assistant.name;
+    }).join('|') + ':' + rows.map(function (row) {
       var name = row.querySelector('.chat-history__item-name span');
       return row.id + ':' + (name ? name.textContent : '新对话');
     }).join('|');
@@ -85,11 +91,12 @@
       column.prepend(tree);
     }
     tree.dataset.signature = signature;
-    tree.innerHTML = '<div class="eva-personal-assistant-heading"><span>我的助理</span><button class="eva-assistant-tree__create" type="button" aria-label="创建助理">＋</button></div>' + personalFolderMarkup('通用助理', 0) + personalFolderMarkup('Eva研发助理', 1);
-    var createAssistant = tree.querySelector('.eva-assistant-tree__create');
-    if (createAssistant) createAssistant.addEventListener('click', function () { this.textContent = '已进入创建助理'; });
+    tree.innerHTML = '<div class="eva-my-ai-sidebar-actions eva-personal-sidebar-actions"><button class="eva-assistant-tree__create eva-my-ai-sidebar-actions__create-assistant" type="button" aria-label="创建助理">创建助理</button><button class="eva-assistant-tree__new-chat eva-my-ai-sidebar-actions__new-session" type="button" aria-label="新建对话">新建对话</button></div>' + personalAssistants.map(personalFolderMarkup).join('');
+    var personalPlusIcon = document.querySelector('.eva-personal-entry__plus svg');
+    var createAssistant = tree.querySelector('.eva-my-ai-sidebar-actions__create-assistant');
+    if (personalPlusIcon && createAssistant) createAssistant.prepend(personalPlusIcon.cloneNode(true));
     var folders = tree.querySelectorAll('.eva-assistant-folder');
-    var sourceIcon = historyNode ? assistantIcon(historyNode) : '';
+    var sourceIcon = assistantIcon();
     folders.forEach(function (folder) {
       folder.querySelector('.eva-assistant-folder__icon').innerHTML = sourceIcon;
       folder.querySelector('.eva-assistant-folder__button').addEventListener('click', function () {
@@ -113,9 +120,28 @@
       button.innerHTML = '<span class="eva-assistant-conversation__title">' + escapeText(conversationTitle) + '</span><time class="eva-assistant-conversation__time">' + displayTime + '</time>';
       if (index === 0) button.classList.add('is-selected');
       button.__evaSourceConversation = row;
-      folders[index < 3 ? 0 : 1].querySelector('.eva-assistant-folder__conversations').appendChild(button);
+      var ownerFolder = folders[Math.min(index < 3 ? 0 : 1, folders.length - 1)];
+      if (ownerFolder) ownerFolder.querySelector('.eva-assistant-folder__conversations').appendChild(button);
     });
   }
+
+  window.__evaSavePersonalAssistant = function (options) {
+    var settings = options || {};
+    var name = String(settings.name || '').trim();
+    if (!name) return false;
+    if (settings.mode === 'edit') {
+      var assistant = personalAssistants.find(function (item) { return item.id === settings.id; });
+      if (!assistant) return false;
+      assistant.name = name;
+    } else {
+      personalAssistants.push({ id: 'assistant-' + Date.now().toString(36), name: name });
+    }
+    var tree = document.querySelector('#eva-personal-history-column > .eva-assistant-tree');
+    if (tree) tree.dataset.signature = '';
+    var column = document.getElementById('eva-personal-history-column');
+    if (column) ensureAssistantTree(column);
+    return true;
+  };
 
   function hideHistoryColumn() {
     if (historyDivider) historyDivider.classList.add('eva-personal-history-divider-hidden');
