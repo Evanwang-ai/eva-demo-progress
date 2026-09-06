@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import test from 'node:test';
+
+import { createPatchedRuntime } from '../tools/build-runtime.mjs';
+
+const splitRuntimeScripts = [
+  'prototype/009-0-demo-time.js',
+  'prototype/009-1-data-drive.js',
+  'prototype/009-2-data-supply.js',
+  'prototype/009-3-data-im.js',
+  'prototype/009-4-registry.js',
+  'prototype/009-5-patch-im.js',
+  'prototype/009-6-patch-general.js',
+  'prototype/009-7-patch-sider.js',
+  'prototype/009-8-patch-automation.js',
+];
+
+test('浏览器只加载数据、页面注册器和构建完成的运行时', () => {
+  const entry = fs.readFileSync('index.html', 'utf8');
+  const loadedScripts = [...entry.matchAll(/<script[^>]+src="([^"]+)"/g)].map(match => match[1]);
+  const browserInputs = splitRuntimeScripts.slice(0, 4);
+  const browserIndexes = browserInputs.map(file => loadedScripts.indexOf(file));
+
+  assert.equal(entry.includes('prototype/009-drive-demo-seed.js'), false, '旧的 009 单体入口仍被加载');
+  assert.equal(browserIndexes.every(index => index >= 0), true, '009 数据文件没有全部进入浏览器入口');
+  assert.deepEqual(browserIndexes, [...browserIndexes].sort((a, b) => a - b));
+  assert.equal(splitRuntimeScripts.slice(4).some(file => loadedScripts.includes(file)), false, '浏览器仍加载构建期补丁');
+  assert.ok(loadedScripts.includes('prototype/010-native-page-registry.js'));
+  assert.ok(loadedScripts.includes('vendor/eva-runtime.module.js'));
+});
+
+test('manifest 声明数据入口和构建期运行时补丁', () => {
+  const manifest = JSON.parse(fs.readFileSync('prototype-manifest.json', 'utf8'));
+  const blocks = manifest.blocks.filter(block => block.file && /^prototype\/009-/.test(block.file));
+
+  assert.deepEqual(blocks.map(block => block.file), splitRuntimeScripts);
+  for (const block of blocks.slice(4)) assert.equal(block.role, 'build-input');
+  assert.equal(fs.existsSync('prototype/009-9-loader.js'), false, '旧的浏览器运行时加载器仍然存在');
+});
+
+test('构建期补丁链生成确定且可直接发布的运行时代码', () => {
+  const first = createPatchedRuntime();
+  const second = createPatchedRuntime();
+  const digest = value => crypto.createHash('sha256').update(value).digest('hex');
+
+  assert.deepEqual(first.patchOrder, ['im', 'general', 'sidebar', 'automation']);
+  assert.equal(first.source, second.source);
+  assert.equal(digest(first.source), digest(second.source));
+  assert.ok(first.source.length > 18_000_000);
+  assert.ok(first.source.includes('function isPwaRegistrationSupported(){return!1;'));
+});
+
+test('所有字符串替换统一经过注册器的锚点校验', () => {
+  const patchFiles = splitRuntimeScripts.slice(5, 9);
+  for (const file of patchFiles) {
+    const source = fs.readFileSync(file, 'utf8');
+    assert.equal(/source\s*=\s*source\.replace\(/.test(source), false, `${file} 绕过了 __evaCut 锚点校验`);
+  }
+});

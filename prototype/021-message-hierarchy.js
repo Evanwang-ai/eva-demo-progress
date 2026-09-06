@@ -97,46 +97,8 @@
     }) || null;
   }
 
-  function replaceDriveNavWithNativeClone() {
-    var driveNav = document.getElementById('eva-drive-nav');
-    if (!driveNav || driveNav.dataset.evaNativeClone === 'true') return driveNav;
-    var container = driveNav.parentElement;
-    var template = nativeNavItem(container, '消息') || nativeNavItem(container, '项目') || nativeNavItem(container, '空间');
-    if (!template || template === driveNav) return driveNav;
-
-    var clone = template.cloneNode(true);
-    clone.id = 'eva-drive-nav';
-    clone.dataset.evaAction = 'drive';
-    clone.dataset.evaNativeClone = 'true';
-    clone.classList.remove('eva-native-nav-suppressed', 'is-active');
-    clone.removeAttribute('aria-current');
-    clone.removeAttribute('aria-selected');
-    clone.querySelectorAll('[id]').forEach(function (node) { node.removeAttribute('id'); });
-
-    var labelNode = Array.from(clone.querySelectorAll('span')).reverse().find(function (span) {
-      var text = directText(span);
-      return text === '消息' || text === '项目' || text === '空间' || text === '协作空间';
-    });
-    if (labelNode) labelNode.textContent = '团队文件';
-
-    var svg = clone.querySelector('svg');
-    if (svg) {
-      svg.setAttribute('viewBox', '0 0 24 24');
-      svg.setAttribute('fill', 'none');
-      svg.setAttribute('stroke', 'currentColor');
-      svg.setAttribute('stroke-width', '2');
-      svg.setAttribute('stroke-linecap', 'round');
-      svg.setAttribute('stroke-linejoin', 'round');
-      svg.innerHTML = MESSAGE_ACTION_ICONS.driveNav;
-    }
-
-    driveNav.replaceWith(clone);
-    return clone;
-  }
-
   function overviewIsOpen() {
-    var root = document.getElementById('eva-collab-overview-root');
-    return Boolean(root && !root.hidden);
+    return String(location.hash || '').indexOf('#/overview') === 0;
   }
 
   function overviewIcon(name) {
@@ -860,16 +822,16 @@
     });
   }
 
-  function ensureOverviewRoot() {
+  function ensureOverviewRoot(host) {
     var root = document.getElementById('eva-collab-overview-root');
     if (root) {
+      if (host && root.parentElement !== host) host.appendChild(root);
       bindOverviewControls(root);
       return root;
     }
     root = document.createElement('section');
     root.id = 'eva-collab-overview-root';
     root.className = 'eva-collab-overview';
-    root.hidden = true;
     root.setAttribute('aria-label', '协作事项');
     root.innerHTML = `
       <header class="eva-collab-overview__header">
@@ -896,52 +858,9 @@
           </section>
         </main>
       </div>`;
-    document.body.appendChild(root);
+    if (host) host.appendChild(root);
     bindOverviewControls(root);
     return root;
-  }
-
-  function buildOverviewNav() {
-    var driveNav = replaceDriveNavWithNativeClone();
-    var container = driveNav && driveNav.parentElement;
-    var messagesNav = nativeNavItem(container, '消息');
-    if (!container) return;
-    if (!messagesNav) return;
-    var overviewNav = document.getElementById('eva-collab-overview-nav');
-    if (!overviewNav) {
-      overviewNav = messagesNav.cloneNode(true);
-      overviewNav.id = 'eva-collab-overview-nav';
-      overviewNav.dataset.evaOverviewNav = 'true';
-      overviewNav.classList.remove('eva-native-nav-suppressed', 'is-active');
-      overviewNav.removeAttribute('aria-current');
-      overviewNav.removeAttribute('aria-selected');
-      overviewNav.querySelectorAll('[id]').forEach(function (node) { node.removeAttribute('id'); });
-
-      var labelNode = Array.from(overviewNav.querySelectorAll('span')).reverse().find(function (span) {
-        return directText(span) === '消息';
-      });
-      if (labelNode) labelNode.textContent = '协作概览';
-
-      var svg = overviewNav.querySelector('svg');
-      if (svg) {
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', 'currentColor');
-        svg.setAttribute('stroke-width', '1.8');
-        svg.setAttribute('stroke-linecap', 'round');
-        svg.setAttribute('stroke-linejoin', 'round');
-        svg.innerHTML = '<rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect>';
-      }
-    }
-
-    var overviewAnchor = document.getElementById('eva-my-avatar-nav') || messagesNav;
-    if (overviewAnchor.nextElementSibling !== overviewNav) {
-      overviewAnchor.insertAdjacentElement('afterend', overviewNav);
-    }
-
-    overviewNav.style.removeProperty('display');
-    overviewNav.setAttribute('aria-hidden', 'false');
-    ensureOverviewRoot();
   }
 
   function createMyAssistantAvatar(context) {
@@ -978,40 +897,8 @@
     return avatar;
   }
 
-  function syncOverviewSelection() {
-    var open = overviewIsOpen();
-    var overviewNav = document.getElementById('eva-collab-overview-nav');
-    if (overviewNav) overviewNav.setAttribute('aria-current', open ? 'page' : 'false');
-    document.body.classList.toggle('eva-collab-overview-open', open);
-
-    if (!overviewNav || !overviewNav.parentElement) return;
-    var container = overviewNav.parentElement;
-    ['消息', '项目', '空间'].forEach(function (label) {
-      var nav = nativeNavItem(container, label);
-      if (nav) nav.classList.toggle('eva-overview-underlay-suppressed', open);
-    });
-    ['eva-drive-nav', 'eva-contacts-nav', 'eva-my-avatar-nav'].forEach(function (id) {
-      var nav = document.getElementById(id);
-      if (open && nav) nav.setAttribute('aria-current', 'false');
-    });
-    document.querySelectorAll('[data-eva-space-child]').forEach(function (button) {
-      if (open) button.setAttribute('aria-current', 'false');
-    });
-  }
-
-  function openOverview() {
-    closeContacts();
-    var driveRoot = document.getElementById('eva-drive-root');
-    if (driveRoot && !driveRoot.hidden) driveRoot.hidden = true;
-    ensureOverviewRoot().hidden = false;
-    syncOverviewSelection();
-  }
-
   function closeOverview() {
     closeOverviewDetail();
-    var root = document.getElementById('eva-collab-overview-root');
-    if (root && !root.hidden) root.hidden = true;
-    syncOverviewSelection();
   }
 
   function openExistingSpaceCreate() {
@@ -1054,9 +941,7 @@
 
   function openOverviewMessageTarget(item) {
     closeOverview();
-    var overviewNav = document.getElementById('eva-collab-overview-nav');
-    var messagesNav = overviewNav && nativeNavItem(overviewNav.parentElement, '消息');
-    if (messagesNav) messagesNav.click();
+    location.hash = '#/messages';
 
     var attempts = 0;
     function focusConversation() {
@@ -1193,100 +1078,20 @@
   }
 
   function contactsIsOpen() {
-    var root = document.getElementById('eva-contacts-root');
-    return Boolean(root && !root.hidden);
+    return String(location.hash || '').indexOf('#/contacts') === 0;
   }
 
-  function ensureContactsRoot() {
+  function ensureContactsRoot(host) {
     var root = document.getElementById('eva-contacts-root');
-    if (root) return root;
-    root = document.createElement('section');
-    root.id = 'eva-contacts-root';
-    root.className = 'eva-contacts';
-    root.hidden = true;
-    root.setAttribute('aria-label', '通讯录');
-    root.innerHTML = '<header class="eva-contacts__header"><strong>通讯录</strong></header><div class="eva-contacts__empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 13a3 3 0 1 0-6 0"></path><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"></path><path d="M9 18h6"></path></svg></div>';
-    document.body.appendChild(root);
+    if (!root) {
+      root = document.createElement('section');
+      root.id = 'eva-contacts-root';
+      root.className = 'eva-contacts';
+      root.setAttribute('aria-label', '通讯录');
+      root.innerHTML = '<header class="eva-contacts__header"><strong>通讯录</strong></header><div class="eva-contacts__empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 13a3 3 0 1 0-6 0"></path><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"></path><path d="M9 18h6"></path></svg></div>';
+    }
+    if (host && root.parentElement !== host) host.appendChild(root);
     return root;
-  }
-
-  function buildContactsNav() {
-    var driveNav = replaceDriveNavWithNativeClone();
-    var container = driveNav && driveNav.parentElement;
-    if (!container) return;
-    var contactsNav = document.getElementById('eva-contacts-nav');
-    if (!contactsNav) {
-      var template = nativeNavItem(container, '消息') || nativeNavItem(container, '项目') || nativeNavItem(container, '空间');
-      if (!template) return;
-      contactsNav = template.cloneNode(true);
-      contactsNav.id = 'eva-contacts-nav';
-      contactsNav.dataset.evaContactsNav = 'true';
-      contactsNav.classList.remove('eva-native-nav-suppressed', 'is-active');
-      contactsNav.removeAttribute('aria-current');
-      contactsNav.removeAttribute('aria-selected');
-      contactsNav.querySelectorAll('[id]').forEach(function (node) { node.removeAttribute('id'); });
-
-      var labelNode = Array.from(contactsNav.querySelectorAll('span')).reverse().find(function (span) {
-        var text = directText(span);
-        return text === '消息' || text === '项目' || text === '空间' || text === '协作空间';
-      });
-      if (labelNode) labelNode.textContent = '通讯录';
-
-      var svg = contactsNav.querySelector('svg');
-      if (svg) {
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', 'currentColor');
-        svg.setAttribute('stroke-width', '1.8');
-        svg.setAttribute('stroke-linecap', 'round');
-        svg.setAttribute('stroke-linejoin', 'round');
-        svg.innerHTML = '<path d="M15 13a3 3 0 1 0-6 0"></path><path d="M17 18a5 5 0 0 0-10 0"></path><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path>';
-      }
-      driveNav.insertAdjacentElement('afterend', contactsNav);
-    }
-
-    var contactsLabel = Array.from(contactsNav.querySelectorAll('span')).reverse().find(function (span) {
-      return directText(span) === 'Eva 通讯录' || directText(span) === '通讯录';
-    });
-    if (contactsLabel) contactsLabel.textContent = '通讯录';
-    ensureContactsRoot();
-  }
-
-  function syncContactsSelection() {
-    var open = contactsIsOpen();
-    var contactsNav = document.getElementById('eva-contacts-nav');
-    if (contactsNav) contactsNav.setAttribute('aria-current', open ? 'page' : 'false');
-    document.body.classList.toggle('eva-contacts-open', open);
-
-    if (!contactsNav || !contactsNav.parentElement) return;
-    var container = contactsNav.parentElement;
-    ['消息', '项目', '空间'].forEach(function (label) {
-      var nav = nativeNavItem(container, label);
-      if (nav) nav.classList.toggle('eva-contacts-underlay-suppressed', open);
-    });
-    document.querySelectorAll('[data-eva-space-child]').forEach(function (button) {
-      if (open) button.setAttribute('aria-current', 'false');
-    });
-  }
-
-  function openContacts() {
-    window.dispatchEvent(new CustomEvent('eva:sidebar-select', { detail: { id: 'contacts', overlay: true } }));
-    closeOverview();
-    var driveRoot = document.getElementById('eva-drive-root');
-    if (driveRoot && !driveRoot.hidden) driveRoot.hidden = true;
-    var root = ensureContactsRoot();
-    root.hidden = false;
-    if (typeof window.__evaEnhanceContacts === 'function') {
-      window.__evaEnhanceContacts();
-      requestAnimationFrame(window.__evaEnhanceContacts);
-    }
-    syncContactsSelection();
-  }
-
-  function closeContacts() {
-    var root = document.getElementById('eva-contacts-root');
-    if (root && !root.hidden) root.hidden = true;
-    syncContactsSelection();
   }
 
   function buildSpaceTree() {
@@ -1331,24 +1136,6 @@
       var selected = !driveOpen && !contactsOpen && !overviewOpen && currentName && button.dataset.evaSpaceChild === currentName;
       button.setAttribute('aria-current', selected ? 'page' : 'false');
     });
-  }
-
-  function syncDriveShellSelection(root) {
-    var driveNav = replaceDriveNavWithNativeClone();
-    if (!driveNav) return;
-    var spaceNav = nativeNavItem(driveNav.parentElement, '项目') || nativeNavItem(driveNav.parentElement, '空间');
-    var driveOpen = Boolean(root && !root.hidden);
-
-    driveNav.setAttribute('aria-current', driveOpen ? 'page' : 'false');
-    if (!spaceNav) return;
-    /* 一级菜单互不控制显隐；只清理旧版云盘遗留的隐藏状态。 */
-    spaceNav.classList.remove('eva-native-nav-suppressed');
-    if (Object.prototype.hasOwnProperty.call(spaceNav.dataset, 'evaPreviousAriaCurrent')) {
-      var previous = spaceNav.dataset.evaPreviousAriaCurrent;
-      if (previous) spaceNav.setAttribute('aria-current', previous);
-      else spaceNav.removeAttribute('aria-current');
-      delete spaceNav.dataset.evaPreviousAriaCurrent;
-    }
   }
 
   function buildDriveScopebar(root) {
@@ -1446,7 +1233,6 @@
 
   function tuneDriveView() {
     var root = document.getElementById('eva-drive-root');
-    syncDriveShellSelection(root);
     if (!root || root.hidden) return;
     buildDriveScopebar(root);
     root.querySelectorAll('[data-drive-action="bridge"]').forEach(function (button) {
@@ -1462,12 +1248,11 @@
 
   function openDrive() {
     closeOverview();
-    closeContacts();
     if (typeof window.__evaOpenDrive === 'function') {
       window.__evaOpenDrive('global', null, 'owned');
       return;
     }
-    var driveNav = replaceDriveNavWithNativeClone();
+    var driveNav = document.getElementById('eva-drive-nav');
     if (driveNav) driveNav.click();
   }
 
@@ -1520,13 +1305,9 @@
 
   function tuneMessageView() {
     document.body.classList.add('eva-message-hierarchy-ready');
-    buildOverviewNav();
     syncPersonalAssistantNav();
-    buildContactsNav();
     buildSpaceTree();
     syncSpaceTreeSelection();
-    syncContactsSelection();
-    syncOverviewSelection();
     tuneDriveView();
 
     var spaceFrame = document.querySelector('.collab-frame');
@@ -1622,7 +1403,6 @@
     if (detailClose) {
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
       closeOverviewDetail();
       return;
     }
@@ -1630,7 +1410,6 @@
     if (detailAction) {
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
       resolveOverviewDetail(detailAction.dataset.evaOverviewDetailAction);
       return;
     }
@@ -1638,7 +1417,6 @@
     if (overviewAction && overviewIsOpen()) {
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
       var action = overviewAction.dataset.evaOverviewAction;
       var overviewSpaceId = overviewAction.dataset.evaOverviewSpaceId;
       var overviewEventId = overviewAction.dataset.evaOverviewEventId;
@@ -1651,40 +1429,17 @@
         openOverviewObject(overviewEvent, action);
       } else if (action === 'drive') {
         closeOverview();
-        var driveNav = replaceDriveNavWithNativeClone();
+        var driveNav = document.getElementById('eva-drive-nav');
         if (driveNav) driveNav.click();
       }
       queueTune();
       return;
     }
 
-    var overviewNav = event.target.closest('[data-eva-overview-nav]');
-    if (overviewNav) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      openOverview();
-      return;
-    }
-
-    if (overviewIsOpen() && event.target.closest('aside')) closeOverview();
-
-    var contactsNav = event.target.closest('[data-eva-contacts-nav]');
-    if (contactsNav) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      openContacts();
-      return;
-    }
-
-    if (contactsIsOpen() && event.target.closest('aside')) closeContacts();
-
     var spaceChild = event.target.closest('[data-eva-space-child]');
     if (spaceChild) {
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
       spaceTreeExpanded = true;
       clearOverviewDestination();
       var workspaceId = SPACE_IDS[spaceChild.dataset.evaSpaceChild];
@@ -1728,6 +1483,28 @@
     queueTune();
   }
 
+  window.__evaNativePages.register('overview', function (host) {
+    var root = ensureOverviewRoot(host);
+    root.hidden = false;
+    renderOverviewEvents('all', 'pending');
+    return function () {
+      closeOverviewDetail();
+      if (root.parentElement === host) root.remove();
+    };
+  });
+
+  window.__evaNativePages.register('contacts', function (host) {
+    var root = ensureContactsRoot(host);
+    root.hidden = false;
+    if (typeof window.__evaEnhanceContacts === 'function') {
+      window.__evaEnhanceContacts();
+      requestAnimationFrame(window.__evaEnhanceContacts);
+    }
+    return function () {
+      if (root.parentElement === host) root.remove();
+    };
+  });
+
   function mutationNeedsTune(mutation) {
     var target = mutation.target && mutation.target.nodeType === 1
       ? mutation.target
@@ -1740,9 +1517,7 @@
     if (mutations.some(mutationNeedsTune)) queueTune();
   }).observe(document.documentElement, {
     childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['hidden', 'aria-hidden', 'aria-selected']
+    subtree: true
   });
 })();
 

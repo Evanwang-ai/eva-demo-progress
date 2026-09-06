@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+
+const patchFiles = [
+  'prototype/009-4-registry.js',
+  'prototype/009-5-patch-im.js',
+  'prototype/009-6-patch-general.js',
+  'prototype/009-7-patch-sider.js',
+  'prototype/009-8-patch-automation.js',
+];
+
+export function createPatchedRuntime(root = process.cwd()) {
+  const window = {};
+  const context = vm.createContext({ window, console });
+  for (const file of patchFiles) {
+    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  }
+  let source = fs.readFileSync(path.join(root, 'vendor/eva-legacy-runtime.js'), 'utf8');
+  for (const patch of window.__EVA_PATCHES || []) source = patch.apply(source);
+  return { source, patchOrder: Array.from(window.__EVA_PATCHES || [], patch => String(patch.name)) };
+}
+
+export function buildSite(root = process.cwd()) {
+  const projectRoot = path.resolve(root);
+  const outputRoot = path.resolve(projectRoot, 'dist');
+  if (outputRoot !== path.join(projectRoot, 'dist') || !outputRoot.startsWith(`${projectRoot}${path.sep}`)) {
+    throw new Error('拒绝清理非项目 dist 目录');
+  }
+
+  fs.rmSync(outputRoot, { recursive: true, force: true });
+  fs.mkdirSync(outputRoot, { recursive: true });
+  for (const directory of ['prototype', 'review', 'supabase']) {
+    fs.cpSync(path.join(projectRoot, directory), path.join(outputRoot, directory), { recursive: true });
+  }
+  fs.mkdirSync(path.join(outputRoot, 'vendor'), { recursive: true });
+  fs.copyFileSync(path.join(projectRoot, 'vendor/eva-legacy.css'), path.join(outputRoot, 'vendor/eva-legacy.css'));
+  fs.copyFileSync(path.join(projectRoot, 'index.html'), path.join(outputRoot, 'index.html'));
+
+  const result = createPatchedRuntime(projectRoot);
+  fs.writeFileSync(
+    path.join(outputRoot, 'vendor/eva-runtime.module.js'),
+    `${result.source}\n//# sourceURL=eva-demo-0904-v1.module.js\n`,
+  );
+  return { outputRoot, ...result };
+}
+
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isMain) {
+  const result = buildSite();
+  console.log(`Eva build complete: ${result.outputRoot} (${Buffer.byteLength(result.source)} runtime bytes)`);
+}

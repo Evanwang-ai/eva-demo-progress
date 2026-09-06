@@ -12,7 +12,8 @@
   ];
 
   function isCollaborationMode() {
-    return document.body.classList.contains('eva-mode-collaboration');
+    var route = String(location.hash || '').slice(1).split('?')[0] || '/';
+    return route === '/messages';
   }
 
   function recentIcon() {

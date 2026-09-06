@@ -6,21 +6,135 @@
 
 - Eva 同学是桌面客户端，不是网页产品。原型中的 `.topbar` 表示客户端系统标题栏，是所有页面共享且必须持续可见的窗口外壳。
 - 新增或修改协作概览、消息、Space、云盘、通讯录等一级页面时，只替换标题栏下方的内容区；不得从视口 `top: 0` 覆盖标题栏，也不得为某个页面复制、重造或省略标题栏。
-- 全屏或 `position: fixed` 的一级页面根节点，上边界必须使用现有 `--topbar-height`（建议写作 `top: var(--topbar-height, 2.6rem)`）；左边界继续按当前侧栏变量计算。页面内部标题属于内容标题，不能替代系统标题栏。
+- 一级页面禁止使用全屏或 `position: fixed` 根节点覆盖现有应用。一级页面只能由 React Router 选择并挂载到原生 Outlet 中的唯一页面宿主；页面内部标题属于内容标题，不能替代系统标题栏。
 - 弹层、抽屉和遮罩也要先判断其归属范围。除非明确评审的是整个窗口级阻断态，否则默认限制在标题栏下方的客户端内容区。
 - 交付前静态检查所有新增一级页面根节点，确认系统标题栏中的品牌、Token、帮助、反馈及窗口控制不会被页面内容遮挡。静态检查只能证明源码边界正确，不能表述为已经完成视觉或交互验收。
 
 ## 当前工作稿
 
-- 当前唯一页面入口为 `index.html`，业务模块位于 `prototype/`，加载顺序由 `prototype-manifest.json` 声明。不得恢复 22MB 自包含 HTML，也不得保留第二份同步入口。
+- 当前唯一页面入口为 `index.html`，业务模块位于 `prototype/`。`prototype-manifest.json` 是源码职责与装配顺序清单，`index.html` 是浏览器实际加载入口；两者由合同检查保持一致。不得恢复 22MB 自包含 HTML，也不得保留第二份同步入口。
+- 历史 `009-drive-demo-seed.js` 已按领导 0904 拆分思路拆成独立职责：`009-0` 时间、`009-1` 云盘数据、`009-2` 供应链数据、`009-3` IM 数据在浏览器加载；`009-4` 补丁注册器、`009-5` IM 补丁、`009-6` 通用补丁、`009-7` 侧栏/路由补丁、`009-8` 自动化补丁只在 Node 构建阶段运行。旧 `009-9` 浏览器加载器已删除，不得恢复。
+- `009-5` 至 `009-8` 只能通过 `window.__evaPatch` 注册，由 `tools/build-runtime.mjs` 在构建时按固定顺序执行并生成 `dist/vendor/eva-runtime.module.js`。浏览器禁止读取、拼接、编译 `eva-legacy-runtime.js`。修改补丁链后必须运行 `node tools/patch-hash.mjs` 与 `node --check dist/vendor/eva-runtime.module.js`。
 - 项目仓库为 `https://github.com/labilio/eva-demo-progress`；线上评审入口为 `https://eva-demo-progress.vercel.app/`。本地在仓库根目录运行 `npm start`，默认访问 `http://127.0.0.1:4173/`。
-- GitHub、Vercel 和本地不再维护三份页面：三者使用同一套模块化源码。GitHub `main` 是 Vercel 生产发布的唯一来源；本地工作区通常更新在前，但只有 push 到 `main` 后才会触发线上更新。
+- GitHub、Vercel 和本地不再维护三份页面：三者使用同一套模块化源码。功能分支用于并行开发和评审，GitHub `main` 是 Vercel 生产发布的唯一来源；未经明确授权不得把功能分支合并或推送到 `main`。
 - `vendor/eva-legacy-runtime.js` 只是从历史 Demo 抽出的迁移依赖，不是 Eva 产品或设计参照。AionUI 与新 Eva 没有产品关系；新增能力不得照搬或参照 AionUI，后续应按专项计划逐步移除该依赖。
 - 本地预览必须通过 `npm start` 使用 HTTP，不以 `file://` 作为运行合同。
 - `prototypes/eva-个人协作双模式-消息层级方案-工作稿.html` 及 `artifacts/source/build-message-hierarchy.mjs` 属于旧消息层级构建链，不再作为现行工作稿或修改入口，也不得用于覆盖当前工作稿。
 - `prototypes/eva-个人协作双模式-消息层级方案-9.2-v1.html` 是 2026-09-02 确认的评审快照，不得直接修改或由拼接脚本覆盖。
 - `prototypes/eva-个人协作双模式-方案A.html` 是受保护的参照副本，不得直接修改。
 - 项目群聊的现行结构只允许为“大群 → 可选子区”。不得重新引入项目内分类数据、分类标题、分类下拉、管理分组入口，或通过 CSS 隐藏这些旧结构。
+
+## 现行架构图（接手前必读）
+
+这是一套模块化源码、一个浏览器入口、一条构建链和一个原生路由出口。GitHub、Vercel 与本地预览读取的是同一套文件，不存在需要人工同步的第二份 HTML。
+
+```text
+开发与发布
+
+本地工作区
+  ├─ index.html                         唯一页面入口
+  ├─ prototype/                        Eva 数据、样式和迁移模块
+  ├─ vendor/eva-legacy-runtime.js      临时历史运行时，只作为构建输入
+  ├─ review/                           独立云端批注工具层
+  └─ prototype-manifest.json           入口加载顺序与文件登记表
+          │
+          ├─ npm start
+          │    ├─ npm run build
+          │    └─ dist/ ──────────────→ 本地 HTTP 预览
+          │
+          └─ 用户授权后 commit / push
+                         │
+                         ▼
+                    GitHub 功能分支
+                         │ 评审通过后合入 main
+                         ▼
+                    GitHub main
+                         │ Vercel 自动构建
+                         ▼
+                    Vercel 生产站
+```
+
+```text
+构建与浏览器启动（严格单向）
+
+npm run build
+  ├─ 读取 vendor/eva-legacy-runtime.js
+  ├─ 执行 009-4 → 009-5 → 009-6 → 009-7 → 009-8
+  ├─ 锚点不匹配立即让构建失败
+  └─ 生成 dist/vendor/eva-runtime.module.js
+                    │
+                    ▼
+dist/index.html
+  ├─ 009-0 / 009-1 / 009-2 / 009-3 结构化 Demo 数据
+  ├─ 010-native-page-registry.js     路由页面宿主注册表
+  └─ eva-runtime.module.js           已完成构建的唯一应用运行时
+                    │
+                    ▼
+React HashRouter → ProtectedLayout → Layout → Outlet
+                                             └─ 当前路由对应的唯一 Page
+```
+
+```text
+EvaApp
+├─ Topbar                         全局唯一
+├─ Sidebar                       全局唯一；选中态由 URL 推导
+└─ Router Outlet                 一级页面唯一出口
+   ├─ PersonalEvaPage            /guid、/conversation/:id
+   ├─ TeamMessagesPage           /messages（含关注/最近、我的 AI 模式）
+   ├─ CollaborationOverviewPage  /overview
+   ├─ ProjectsPage               /collab
+   ├─ ContactsPage               /contacts
+   ├─ DrivePage                  /drive
+   ├─ WorkboardPage              /eva-stub/工作板
+   ├─ DigitalEmployeesPage       /eva-stub/数字员工
+   └─ ConnectionCenterPage       /eva-stub/技能
+```
+
+`010-native-page-registry.js` 是迁移桥：它把尚未改写成 React 组件的现有页面挂入 React Route 创建的宿主，并在路由离开时执行 cleanup。它不是第二个页面控制器，禁止由它创建 fixed 页面、修改路由或管理导航选中态。每个页面完成 React 化后，应删除对应注册桥、旧 fixed CSS 与 DOM 增强代码。
+
+### 修改应落在哪一层
+
+| 要修改的内容 | 唯一职责位置 | 禁止做法 |
+| --- | --- | --- |
+| Demo 时间常量 | `009-0-demo-time.js` | 散落到页面模板或 CSS |
+| 云盘示例数据 | `009-1-data-drive.js` | 在视图打开时临时拼第二份数据 |
+| 供应链项目、任务、人员数据 | `009-2-data-supply.js` | 为某个页面复制一套项目对象 |
+| 团队消息、AI 身份、OpenClaw session 示例数据 | `009-3-data-im.js` | 在 DOM 模板中硬编码消息或会话 |
+| 补丁注册、锚点替换公共能力 | `009-4-registry.js` | 新增另一份 patch 数组、Observer 或全局替换器 |
+| 统一 IM 的数据适配及业务组件接入 | `009-5-patch-im.js` | 为关注、最近、我的 AI 分别重画消息区和输入框 |
+| 非 IM 的通用运行时适配 | `009-6-patch-general.js` | 把明确属于侧栏或自动化的修改塞进来 |
+| 一级导航、侧栏与路由状态 | `009-7-patch-sider.js` | 用 DOM class、模拟点击或手改 `aria-current` 维护选中态 |
+| 自动化任务页面适配 | `009-8-patch-automation.js` | 在其他入口覆盖一层自动化页面 |
+| 构建、顺序执行与唯一产物 | `tools/build-runtime.mjs` | 在浏览器读取、拼接或编译 legacy runtime |
+| 非 React 页面迁移桥 | `010-native-page-registry.js` + 对应页面模块 | 向 `document.body` 追加一级页面、用 fixed/z-index 盖住 Outlet |
+| Eva 页面样式 | 对应的 `prototype/*.css`，优先复用现有 token/组件 | 在 JS 里追加页面级 style、靠更高优先级掩盖旧规则 |
+| 云端批注 | `review/` 与 `supabase/` | 混入 Eva 产品信息架构或占用产品内容区域 |
+
+### 架构不变量
+
+1. DOM 中只能有一个 Eva 应用实例、一个可见 IM 会话实例和一个一级导航状态源。
+2. `009-5` 至 `009-8` 只能注册补丁；只有 `tools/build-runtime.mjs` 可以读取并装配历史运行时，浏览器只加载构建产物。
+3. 同一种产品能力只能有一个业务组件。入口差异必须表现为数据和配置差异，不能复制 DOM、CSS 与事件。
+4. 路由是一级导航选中态的唯一权威源；业务数据是会话、任务和文件内容的权威源。不得再把 DOM 当状态仓库。
+5. 锚点变化必须显式失败，禁止“找不到就跳过”或用更宽泛的字符串替换继续运行。
+6. 调整文件或加载顺序时，同步更新 `index.html` 与 `prototype-manifest.json`；二者必须描述同一条链。
+7. 架构迁移完成时必须删除被替代的入口、状态、CSS 和监听器，不能把死代码留作“备用方案”。
+8. 一级页面只允许挂载在 Router Outlet 的路由宿主中；Modal、Popover、右键菜单和批注侧栏可以使用 Portal，但不能承担页面导航。
+9. 当前 18.6 MB legacy runtime 仍是迁移期体积债务。构建时装配已经消除浏览器现场编译与白屏风险，但彻底降低首次解析时间仍需继续把 legacy 业务域迁出并进行代码分割；不得把当前桥接阶段描述为最终 React 架构。
+
+### 改动后的最低验证门槛
+
+```text
+npm test
+npm run check:manifest
+npm run check:project
+node scripts/verify-message-routing-contract.mjs
+node scripts/verify-sidebar-selection-contract.mjs
+node tools/patch-hash.mjs
+git diff --check
+```
+
+涉及路由、导航、IM、弹窗或运行时装配时，还必须通过真实浏览器执行最小链路：进入目标入口 → 切换到另一个入口 → 再切回 → 确认选中态、内容、输入区和交互没有残留。静态检查通过不能代替这一步。
 
 ## 客户设计规范
 

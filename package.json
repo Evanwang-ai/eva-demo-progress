@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node tools/serve.mjs",
+    "build": "node tools/build-runtime.mjs",
+    "prestart": "npm run build",
+    "start": "node tools/serve.mjs dist",
     "check:baseline": "node scripts/contracts/verify-baseline.mjs",
     "check:manifest": "node tools/check-manifest.mjs prototype-manifest.json",
     "check:project": "node scripts/verify-project-contract.mjs",

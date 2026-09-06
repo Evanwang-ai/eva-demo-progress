@@ -3,7 +3,6 @@
   'use strict';
 
   var personalConversation = '整理今天的工作重点';
-  var digitalDismissed = false;
   var personalMessages = {
     '整理今天的工作重点': [
       { role: 'user', text: '把今天最重要的工作按优先级排一下，并标出需要我确认的事项。' },
@@ -37,15 +36,15 @@
     return hash.indexOf('#/guid') === 0 || hash.indexOf('#/conversation/') === 0;
   }
 
-  function ensurePersonalChat() {
+  function ensurePersonalChat(host) {
     var root = document.getElementById('eva-personal-chat-surface');
-    if (root) return root;
-    root = document.createElement('section');
-    root.id = 'eva-personal-chat-surface';
-    root.className = 'eva-personal-chat-surface';
-    root.hidden = true;
-    root.innerHTML = '<header class="eva-personal-chat-surface__head"><img src="' + escapeHTML(window.__EVA_COLLEAGUE_PORTRAIT || '') + '" alt=""><strong>Eva 同学</strong><span>个人助理</span></header><div class="eva-personal-chat-surface__stream"></div><div class="eva-personal-chat-surface__composer">输入消息、添加文件或继续追问…</div>';
-    document.body.appendChild(root);
+    if (!root) {
+      root = document.createElement('section');
+      root.id = 'eva-personal-chat-surface';
+      root.className = 'eva-personal-chat-surface';
+      root.innerHTML = '<header class="eva-personal-chat-surface__head"><img src="' + escapeHTML(window.__EVA_COLLEAGUE_PORTRAIT || '') + '" alt=""><strong>Eva 同学</strong><span>个人助理</span></header><div class="eva-personal-chat-surface__stream"></div><div class="eva-personal-chat-surface__composer">输入消息、添加文件或继续追问…</div>';
+    }
+    if (host && root.parentElement !== host) host.appendChild(root);
     return root;
   }
 
@@ -92,16 +91,16 @@
     if (layer) layer.hidden = true;
   }
 
-  function ensureDigitalPage() {
+  function ensureDigitalPage(host) {
     var root = document.getElementById('eva-digital-employee-page');
-    if (root) return root;
-    root = document.createElement('section');
-    root.id = 'eva-digital-employee-page';
-    root.className = 'eva-digital-employee-page';
-    root.hidden = true;
-    var employees = [['供应链保供专家','DE-0522','供应链'],['质量缺陷分析专家','DE-0523','质量域'],['销售机会跟进专家','DE-0468','国内营销'],['软件测试报告分析专家','DE-0421','研发域'],['项目风险巡检专家','DE-0039','战略与经营'],['客户需求洞察专家','DE-0449','客户运营']];
-    root.innerHTML = '<header class="eva-digital-employee-page__head"><div><h1>数字员工市场</h1><p>按业务域找到数字员工，拉进群或放进项目即可开始协作</p></div></header><main class="eva-digital-employee-page__body"><aside class="eva-digital-employee-page__directory"><div class="eva-digital-market-search">⌕&nbsp; 搜专家</div><nav class="eva-digital-market-nav"><button class="is-active" type="button"><i>▣</i><span><strong>全部</strong><small>组织内可用的数字员工</small></span><em>18</em></button><button type="button"><i>♙</i><span><strong>我创建的</strong><small>由我创建或接入</small></span><em>2</em></button><button type="button"><i>✦</i><span><strong>平台内置</strong><small>开箱即用的官方专家</small></span><em>4</em></button><button type="button"><i>◎</i><span><strong>团队发布</strong><small>各业务团队共享</small></span><em>12</em></button></nav></aside><section class="eva-digital-market-main"><div class="eva-digital-market-query">⌕&nbsp;&nbsp;搜索数字员工：名称、能力或业务域</div><div class="eva-digital-market-filters">' + ['全部业务域 18','研发域 4','供应链 4','质量域 3','国内营销 3','战略与经营 2','客户运营 2'].map(function(label,index){return '<button class="eva-digital-market-filter' + (index===0?' is-active':'') + '" type="button">' + label + '</button>';}).join('') + '</div><header class="eva-digital-market-section-head"><h2>决策与执行专家</h2><p>直接加入协作场景，帮助分析信息、提出建议并推动任务完成</p></header><div class="eva-digital-market-list">' + employees.map(function(item){return '<article class="eva-digital-market-row"><div class="eva-digital-market-row__name"><span class="eva-digital-market-row__avatar">◇</span><strong>' + escapeHTML(item[0]) + '</strong><span class="ai-badge ai-badge-small">AI</span></div><span class="eva-digital-market-row__code">' + escapeHTML(item[1]) + '</span><span class="eva-digital-market-row__domain">' + escapeHTML(item[2]) + '</span><div class="eva-digital-market-row__actions"><button type="button" data-digital-action="拉进群">拉进群</button><button type="button" data-digital-action="放进项目">放进项目</button><button type="button" data-digital-action="接入配置">接入配置</button></div></article>';}).join('') + '</div></section></main><div class="eva-digital-employee-toast" role="status" hidden></div>';
-    document.body.appendChild(root);
+    if (!root) {
+      root = document.createElement('section');
+      root.id = 'eva-digital-employee-page';
+      root.className = 'eva-digital-employee-page';
+      var employees = [['供应链保供专家','DE-0522','供应链'],['质量缺陷分析专家','DE-0523','质量域'],['销售机会跟进专家','DE-0468','国内营销'],['软件测试报告分析专家','DE-0421','研发域'],['项目风险巡检专家','DE-0039','战略与经营'],['客户需求洞察专家','DE-0449','客户运营']];
+      root.innerHTML = '<header class="eva-digital-employee-page__head"><div><h1>数字员工市场</h1><p>按业务域找到数字员工，拉进群或放进项目即可开始协作</p></div></header><main class="eva-digital-employee-page__body"><aside class="eva-digital-employee-page__directory"><div class="eva-digital-market-search">⌕&nbsp; 搜专家</div><nav class="eva-digital-market-nav"><button class="is-active" type="button"><i>▣</i><span><strong>全部</strong><small>组织内可用的数字员工</small></span><em>18</em></button><button type="button"><i>♙</i><span><strong>我创建的</strong><small>由我创建或接入</small></span><em>2</em></button><button type="button"><i>✦</i><span><strong>平台内置</strong><small>开箱即用的官方专家</small></span><em>4</em></button><button type="button"><i>◎</i><span><strong>团队发布</strong><small>各业务团队共享</small></span><em>12</em></button></nav></aside><section class="eva-digital-market-main"><div class="eva-digital-market-query">⌕&nbsp;&nbsp;搜索数字员工：名称、能力或业务域</div><div class="eva-digital-market-filters">' + ['全部业务域 18','研发域 4','供应链 4','质量域 3','国内营销 3','战略与经营 2','客户运营 2'].map(function(label,index){return '<button class="eva-digital-market-filter' + (index===0?' is-active':'') + '" type="button">' + label + '</button>';}).join('') + '</div><header class="eva-digital-market-section-head"><h2>决策与执行专家</h2><p>直接加入协作场景，帮助分析信息、提出建议并推动任务完成</p></header><div class="eva-digital-market-list">' + employees.map(function(item){return '<article class="eva-digital-market-row"><div class="eva-digital-market-row__name"><span class="eva-digital-market-row__avatar">◇</span><strong>' + escapeHTML(item[0]) + '</strong><span class="ai-badge ai-badge-small">AI</span></div><span class="eva-digital-market-row__code">' + escapeHTML(item[1]) + '</span><span class="eva-digital-market-row__domain">' + escapeHTML(item[2]) + '</span><div class="eva-digital-market-row__actions"><button type="button" data-digital-action="拉进群">拉进群</button><button type="button" data-digital-action="放进项目">放进项目</button><button type="button" data-digital-action="接入配置">接入配置</button></div></article>';}).join('') + '</div></section></main><div class="eva-digital-employee-toast" role="status" hidden></div>';
+    }
+    if (host && root.parentElement !== host) host.appendChild(root);
     return root;
   }
 
@@ -116,28 +115,10 @@
     });
   }
 
-  function syncSurfaces() {
-    var personal = ensurePersonalChat();
-    var digital = ensureDigitalPage();
-    var digitalOpen = decodedHash().indexOf('/eva-stub/数字员工') >= 0 && !digitalDismissed && !document.body.classList.contains('eva-contacts-open');
-    digital.hidden = !digitalOpen;
-    document.body.classList.toggle('eva-digital-employee-open', digitalOpen);
-    personal.hidden = digitalOpen || !personalRouteOpen();
-    if (!personal.hidden) renderPersonalChat(personalConversation);
-    tuneLegacyAutomation();
-  }
-
   document.addEventListener('click', function (event) {
-    var sidebarTarget = event.target.closest('[data-eva-nav-id], #eva-contacts-nav');
-    if (sidebarTarget) {
-      var selectedSidebarNavId = sidebarTarget.id === 'eva-contacts-nav' ? 'contacts' : sidebarTarget.dataset.evaNavId;
-      window.dispatchEvent(new CustomEvent('eva:sidebar-select', { detail: { id: selectedSidebarNavId, overlay: ['my-ai', 'contacts', 'drive'].indexOf(selectedSidebarNavId) >= 0 } }));
-      digitalDismissed = selectedSidebarNavId !== 'digital-employees';
-    }
     var createAssistant = event.target.closest('#eva-personal-history-column .eva-assistant-tree__create');
     if (createAssistant) {
       event.preventDefault();
-      event.stopImmediatePropagation();
       openCreateAssistantModal();
       return;
     }
@@ -170,7 +151,7 @@
     var conversationTitle = conversation && conversation.dataset.conversationTitle;
     if (conversation && personalMessages[conversationTitle]) {
       personalConversation = conversationTitle;
-      setTimeout(syncSurfaces, 0);
+      setTimeout(function () { renderPersonalChat(personalConversation); }, 0);
     }
     var legacyTab = event.target.closest('.eva-auto-tabs .eva-auto-tab');
     if (legacyTab) requestAnimationFrame(tuneLegacyAutomation);
@@ -181,8 +162,23 @@
     }
   }, true);
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncSurfaces, { once: true });
-  else syncSurfaces();
-  window.addEventListener('hashchange', syncSurfaces);
-  new MutationObserver(function () { requestAnimationFrame(syncSurfaces); }).observe(document.documentElement, { childList: true, subtree: true });
+  window.__evaNativePages.register('personal', function (host) {
+    var root = ensurePersonalChat(host);
+    root.hidden = false;
+    renderPersonalChat(personalConversation);
+    return function () {
+      closeCreateAssistantModal();
+      if (root.parentElement === host) root.remove();
+    };
+  });
+
+  window.__evaNativePages.register('digital-employees', function (host) {
+    var root = ensureDigitalPage(host);
+    root.hidden = false;
+    return function () {
+      if (root.parentElement === host) root.remove();
+    };
+  });
+
+  tuneLegacyAutomation();
 })();

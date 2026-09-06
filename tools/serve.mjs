@@ -44,7 +44,8 @@ export function createServer(root = process.cwd()) {
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
   const port = Number(process.env.EVA_PORT || 4173);
-  createServer().listen(port, '127.0.0.1', () => {
+  const root = path.resolve(process.argv[2] || process.cwd());
+  createServer(root).listen(port, '127.0.0.1', () => {
     console.log(`Eva demo: http://127.0.0.1:${port}`);
   });
 }

@@ -5,8 +5,6 @@
   var currentTab = 'connectors';
   var currentFilter = 'all';
   var searchQuery = '';
-  var centerOpen = false;
-  var tuneQueued = false;
   var toastTimer = null;
 
   var data = {
@@ -77,8 +75,6 @@
       '<div class="eva-connection-grid" data-center-grid></div></section></div>',
       '<div class="eva-center-toast" role="status" hidden></div>'
     ].join('');
-    document.body.appendChild(center);
-    render();
     return center;
   }
 
@@ -250,36 +246,6 @@
     showToast(item.name + ' 已删除');
   }
 
-  function setCenterOpen(open) {
-    centerOpen = open;
-    ensureShell().hidden = !open;
-    var nav = document.getElementById('eva-connection-center-nav');
-    if (nav) nav.classList.toggle('is-active', open);
-  }
-
-  function tune() {
-    tuneQueued = false;
-    var center = ensureShell();
-    var host = document.getElementById('eva-connection-center-native-host');
-    if (host) {
-      if (center.parentElement !== host) host.appendChild(center);
-      center.classList.add('eva-connection-center--native');
-      center.hidden = false;
-      centerOpen = true;
-    } else if (center.classList.contains('eva-connection-center--native')) {
-      document.body.appendChild(center);
-      center.classList.remove('eva-connection-center--native');
-      center.hidden = true;
-      centerOpen = false;
-    }
-  }
-
-  function queueTune() {
-    if (tuneQueued) return;
-    tuneQueued = true;
-    requestAnimationFrame(tune);
-  }
-
   document.addEventListener('input', function (event) {
     if (!event.target.matches('[data-center-search]')) return;
     searchQuery = event.target.value;
@@ -318,13 +284,23 @@
     }
     if (event.target.closest('[data-center-close]') || (event.target.classList.contains('eva-center-modal-layer'))) { closeModal(); return; }
 
-    if (event.target.closest('aside')) queueTune();
   }, true);
 
   document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeModal(); });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', queueTune, { once: true });
-  else queueTune();
-
-  new MutationObserver(queueTune).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'style'] });
+  window.__evaNativePages.register('connection-center', function (host) {
+    var center = ensureShell();
+    host.appendChild(center);
+    center.classList.add('eva-connection-center--native');
+    center.hidden = false;
+    render();
+    return function () {
+      var layer = document.querySelector('.eva-center-modal-layer');
+      if (layer) {
+        layer.hidden = true;
+        layer.innerHTML = '';
+      }
+      if (center.parentElement === host) center.remove();
+    };
+  });
 })();

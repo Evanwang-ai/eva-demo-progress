@@ -76,15 +76,21 @@
     ].join('');
   }
 
-  function ensureFeaturePages() {
-    if (!document.querySelector('[data-eva-page="workboard"]')) document.body.insertAdjacentHTML('beforeend', buildWorkboard());
+  function ensureFeaturePages(host) {
+    var page = document.querySelector('[data-eva-page="workboard"]');
+    if (!page) {
+      var template = document.createElement('template');
+      template.innerHTML = buildWorkboard();
+      page = template.content.firstElementChild;
+    }
+    if (host && page.parentElement !== host) host.appendChild(page);
+    return page;
   }
 
   function setFeaturePage(name) {
     activeFeature = name;
-    document.querySelectorAll('.eva-personal-feature-page').forEach(function (page) {
-      page.hidden = isTeamMode() || page.dataset.evaPage !== name;
-    });
+    var page = document.querySelector('[data-eva-page="workboard"]');
+    if (page) page.hidden = name !== 'workboard';
   }
 
   function clearFeaturePage() { setFeaturePage(null); }
@@ -183,7 +189,8 @@
     page.className = 'eva-project-detail-page';
     page.hidden = true;
     page.innerHTML = '<header class="eva-project-detail-head"><h1></h1><span class="eva-project-tag"></span></header><nav class="eva-project-tabs" aria-label="项目功能"><button class="eva-project-tab is-active" type="button">任务</button><button class="eva-project-tab" type="button">群聊</button><button class="eva-project-tab" type="button">团队文件</button><button class="eva-project-tab" type="button">自动化</button><button class="eva-project-tab" type="button">项目设置</button></nav><div class="eva-project-detail-body"><p class="eva-project-detail-note"></p><div class="eva-project-groups"></div></div>';
-    document.body.appendChild(page);
+    var list = document.querySelector('.collab-list-page');
+    if (list && list.parentElement) list.parentElement.appendChild(page);
     return page;
   }
 
@@ -225,13 +232,9 @@
 
   function tunePages() {
     pageTuneQueued = false;
-    var currentHash = decodeURI(String(location.hash || ''));
-    activeFeature = currentHash.indexOf('#/eva-stub/工作板') === 0 ? 'workboard' : null;
-    ensureFeaturePages();
     tuneProjectTerminology();
     ensureProjectCards();
     bindStaticInteractions();
-    setFeaturePage(activeFeature);
     if (!isTeamMode()) closeProjectDetail();
   }
 
@@ -245,19 +248,23 @@
     var organization = event.target.closest('.eva-organization-project-card');
       if (organization) { event.preventDefault(); event.stopPropagation(); openProjectDetail(organization); return; }
 
-    var nav = event.target.closest('aside [data-eva-nav-id]');
-    if (!nav) return;
-    var navId = nav.dataset.evaNavId;
-    if (navId === 'workboard') setFeaturePage('workboard');
-    else clearFeaturePage();
-    closeProjectDetail();
-    queueTunePages();
   }, true);
+
+  window.__evaNativePages.register('workboard', function (host) {
+    var page = ensureFeaturePages(host);
+    activeFeature = 'workboard';
+    page.hidden = false;
+    bindStaticInteractions();
+    return function () {
+      activeFeature = null;
+      if (page.parentElement === host) page.remove();
+    };
+  });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', queueTunePages, { once: true });
   else queueTunePages();
 
   window.addEventListener('hashchange', queueTunePages);
 
-  new MutationObserver(queueTunePages).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+  new MutationObserver(queueTunePages).observe(document.documentElement, { childList: true, subtree: true });
 })();

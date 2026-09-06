@@ -136,7 +136,7 @@
 
   function currentModeFromLocation() {
     var hash = String(location.hash || '');
-    if (hash.indexOf('#/collab') === 0 || hash.indexOf('#/messages') === 0) return 'collaboration';
+    if (/^#\/(collab|messages|contacts|drive|overview)(?:[/?]|$)/.test(hash)) return 'collaboration';
     if (hash.indexOf('evaMode=collaboration') >= 0) return 'collaboration';
     return 'personal';
   }
@@ -286,15 +286,15 @@
     return { title: '文件库', subtitle: '汇集所有项目、项目外群聊与私聊中的文件', section: '全部文件' };
   }
 
-  function ensureDriveRoot() {
+  function ensureDriveRoot(host) {
     var root = document.getElementById('eva-drive-root');
-    if (root) return root;
-    root = document.createElement('section');
-    root.id = 'eva-drive-root';
-    root.className = 'eva-drive';
-    root.setAttribute('aria-label', '文件库');
-    root.hidden = true;
-    document.body.appendChild(root);
+    if (!root) {
+      root = document.createElement('section');
+      root.id = 'eva-drive-root';
+      root.className = 'eva-drive';
+      root.setAttribute('aria-label', '文件库');
+    }
+    if (host && root.parentElement !== host) host.appendChild(root);
     return root;
   }
 
@@ -412,28 +412,25 @@
     root.dataset.evaWorkspaceId = state.workspaceId;
     root.hidden = false;
     syncDriveLeft();
-    document.querySelectorAll('.eva-layer-nav').forEach(function (button) { button.classList.remove('is-active'); });
-    var driveNav = document.getElementById('eva-drive-nav');
-    if (driveNav) driveNav.classList.add('is-active');
   }
 
   function openDrive(entry, workspaceId, scope) {
-    if (entry === 'global') window.dispatchEvent(new CustomEvent('eva:sidebar-select', { detail: { id: 'drive', overlay: true } }));
     if (entry === 'workspace') state.mode = 'collaboration';
     state.driveEntry = entry || 'global';
     if (workspaceId) state.workspaceId = workspaceId;
     state.driveScope = scope || (entry === 'workspace' ? 'workspace' : state.driveScope || 'all');
     state.query = '';
     state.selectedId = null;
-    renderDrive();
-    syncShellGeometry();
+    if (String(location.hash || '').indexOf('#/drive') !== 0) location.hash = '#/drive';
+    else {
+      renderDrive();
+      syncShellGeometry();
+    }
   }
 
   function closeDrive() {
     var root = document.getElementById('eva-drive-root');
     if (root) root.hidden = true;
-    var driveNav = document.getElementById('eva-drive-nav');
-    if (driveNav) driveNav.classList.remove('is-active');
   }
 
   function syncDriveLeft() {
@@ -654,9 +651,18 @@
 
   function initialize() {
     installSprite();
-    ensureDriveRoot();
     installEvents();
     window.__evaOpenDrive = openDrive;
+    window.__evaNativePages.register('drive', function (host) {
+      var root = ensureDriveRoot(host);
+      root.hidden = false;
+      renderDrive();
+      syncShellGeometry();
+      return function () {
+        closeDrive();
+        if (root.parentElement === host) root.remove();
+      };
+    });
     var observer = new MutationObserver(scheduleEnhance);
     observer.observe(document.getElementById('root') || document.body, { childList: true, subtree: true });
     scheduleEnhance();

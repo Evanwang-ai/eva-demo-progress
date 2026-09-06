@@ -1,7 +1,9 @@
-*
-!index.html
-!prototype-manifest.json
-!prototype/**
-!vendor/**
-!review/**
-!vercel.json
+.git/
+.vercel/
+dist/
+build/
+node_modules/
+docs/
+migration/
+prototypes/
+tests/

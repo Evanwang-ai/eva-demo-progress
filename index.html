@@ -17,9 +17,15 @@
     <title>Eva · 2026-09-04 · v1</title>
     <script src="prototype/005-script-5.js"></script>
     <link rel="stylesheet" href="prototype/006-style-6.css">
-    <!-- Temporary Eva migration runtime: vendor/eva-legacy-runtime.js -->
+    <script src="prototype/007-runtime-diagnostics.js"></script>
+    <!-- Runtime patches are applied during npm run build. -->
     <link rel="stylesheet" href="prototype/008-semi-card-official.css">
-    <script src="prototype/009-drive-demo-seed.js"></script>
+    <script src="prototype/009-0-demo-time.js"></script>
+    <script src="prototype/009-1-data-drive.js"></script>
+    <script src="prototype/009-2-data-supply.js"></script>
+    <script src="prototype/009-3-data-im.js"></script>
+    <script src="prototype/010-native-page-registry.js"></script>
+    <script type="module" src="vendor/eva-runtime.module.js"></script>
     <link rel="stylesheet" href="vendor/eva-legacy.css">
 <script src="prototype/011-script-11.js"></script>
 <meta name="eva-architecture-variant" content="unified-sidebar-message-hierarchy">
@@ -41,119 +47,6 @@
 <link rel="stylesheet" href="prototype/024-demo-0902-v2-pages.css">
 <script src="prototype/025-demo-0902-v2-pages.js"></script>
 <link rel="stylesheet" href="prototype/026-connection-center-v2.css">
-<script type="application/json" data-eva-connection-center-v2-legacy>
-(function () {
-  'use strict';
-
-  var centerOpen = false;
-  var centerTuneQueued = false;
-
-  function icon(name) {
-    var paths = {
-      search: '<circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>',
-      link: '<path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.1 1.1"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.1-1.1"></path>',
-      mail: '<rect width="18" height="14" x="3" y="5" rx="2"></rect><path d="m3 7 9 6 9-6"></path>',
-      folder: '<path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>',
-      sparkles: '<path d="m12 3-1.4 3.6L7 8l3.6 1.4L12 13l1.4-3.6L17 8l-3.6-1.4z"></path><path d="m5 15-.8 2.2L2 18l2.2.8L5 21l.8-2.2L8 18l-2.2-.8z"></path>',
-      chart: '<path d="M3 3v18h18M7 16v-5M12 16V8M17 16v-9"></path>',
-      file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6M8 13h8M8 17h5"></path>',
-      browser: '<rect width="18" height="16" x="3" y="4" rx="2"></rect><path d="M3 9h18M8 4v5"></path>',
-      database: '<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path>',
-      git: '<circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M6 8v8a2 2 0 0 0 2 2h8M14 6h4v4"></path>'
-    };
-    return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (paths[name] || paths.link) + '</svg>';
-  }
-
-  function card(iconName, title, meta, desc, foot, status, action) {
-    return '<article class="eva-connection-card"><div class="eva-connection-card__head"><span class="eva-connection-card__icon">' + icon(iconName) + '</span><div class="eva-connection-card__title"><strong>' + title + '</strong><span>' + meta + '</span></div></div><p class="eva-connection-card__desc">' + desc + '</p><div class="eva-connection-card__foot"><span>' + foot + '</span>' + (action ? '<button class="eva-connection-card__action" type="button" data-center-toggle>' + action + '</button>' : '<span class="eva-connection-card__status ' + (status === '未启用' ? 'eva-connection-card__status--off' : '') + '">' + status + '</span>') + '</div></article>';
-  }
-
-  function panel(key, title, desc, cards) {
-    return '<section class="eva-connection-panel" data-center-panel="' + key + '"' + (key === 'connectors' ? '' : ' hidden') + '><div class="eva-connection-panel__top"><div><h2>' + title + '</h2><p>' + desc + '</p></div><div class="eva-connection-search">' + icon('search') + '搜索' + title + '</div></div><div class="eva-connection-grid">' + cards.join('') + '</div></section>';
-  }
-
-  function buildCenter() {
-    var connectors = [
-      card('link', '飞书', 'OAuth · 个人账号', '读取云文档、日历和会议信息，并在授权范围内执行操作。', '最近使用：今天', '已连接'),
-      card('mail', '企业邮箱', 'IMAP · 个人账号', '收发邮件、搜索往来内容，并按规则辅助整理。', '最近使用：昨天', '已连接'),
-      card('folder', '本地文件夹', '本机 · 目录授权', '在你明确授权的目录中读取和整理文件。', '授权范围：1 个目录', '未启用')
-    ];
-    var skills = [
-      card('sparkles', '会议纪要整理', '内容处理', '把会议录音或文字整理为结论、决定和后续行动。', '2 个助理正在使用', '', '查看'),
-      card('chart', '数据表分析', '数据处理', '分析表格结构、异常数据和关键趋势，生成简洁结论。', '1 个助理正在使用', '', '查看'),
-      card('file', '网页信息提取', '信息获取', '从网页中提取正文、列表和结构化信息。', '待更新', '', '更新')
-    ];
-    var mcp = [
-      card('browser', 'Browser', '本地服务', '提供网页访问与自动化操作能力。', '4 个工具', '已连接'),
-      card('database', 'Database', '服务账号 · 只读', '在授权的数据源中执行查询并读取结果。', '2 个工具', '已连接'),
-      card('git', 'GitLab', 'Personal Token · 个人账号', '读取代码仓库、合并请求和流水线状态。', '4 个工具', '未启用')
-    ];
-    return '<section class="eva-connection-center" hidden><header class="eva-connection-center__head"><h1>连接中心</h1><p>集中管理 EVA 可使用的连接器、技能与 MCP 服务</p></header><div class="eva-connection-center__body"><nav class="eva-connection-tabs" role="tablist" aria-label="连接中心分类"><button class="eva-connection-tab is-active" type="button" role="tab" aria-selected="true" data-center-tab="connectors">连接器 <span class="eva-connection-tab__count">3</span></button><button class="eva-connection-tab" type="button" role="tab" aria-selected="false" data-center-tab="skills">技能 <span class="eva-connection-tab__count">3</span></button><button class="eva-connection-tab" type="button" role="tab" aria-selected="false" data-center-tab="mcp">MCP <span class="eva-connection-tab__count">3</span></button></nav>' + panel('connectors', '连接器', '管理需要身份授权的外部系统与本机资源。', connectors) + panel('skills', '技能', '管理助理可以安装和调用的工作方法。', skills) + panel('mcp', 'MCP', '管理为助理提供工具能力的 MCP 服务。', mcp) + '</div></section>';
-  }
-
-  function ensureCenter() {
-    var center = document.querySelector('.eva-connection-center');
-    if (center) return center;
-    document.body.insertAdjacentHTML('beforeend', buildCenter());
-    return document.querySelector('.eva-connection-center');
-  }
-
-  function setCenterOpen(open) {
-    centerOpen = open;
-    var center = ensureCenter();
-    center.hidden = !open;
-    var nav = document.getElementById('eva-connection-center-nav');
-    if (nav) nav.classList.toggle('is-active', open);
-  }
-
-  function selectTab(key) {
-    var center = ensureCenter();
-    center.querySelectorAll('[data-center-tab]').forEach(function (tab) {
-      var selected = tab.dataset.centerTab === key;
-      tab.classList.toggle('is-active', selected);
-      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-    });
-    center.querySelectorAll('[data-center-panel]').forEach(function (panel) {
-      panel.hidden = panel.dataset.centerPanel !== key;
-    });
-  }
-
-  function tuneCenter() {
-    centerTuneQueued = false;
-    ensureCenter();
-    setCenterOpen(decodeURI(String(location.hash || '')).indexOf('#/eva-stub/技能') === 0);
-  }
-
-  function queueTuneCenter() {
-    if (centerTuneQueued) return;
-    centerTuneQueued = true;
-    requestAnimationFrame(tuneCenter);
-  }
-
-  document.addEventListener('click', function (event) {
-    var tab = event.target.closest('[data-center-tab]');
-    if (tab) { selectTab(tab.dataset.centerTab); return; }
-
-    var toggle = event.target.closest('[data-center-toggle]');
-    if (toggle) {
-      toggle.textContent = toggle.textContent.trim() === '查看' ? '已打开' : (toggle.textContent.trim() === '更新' ? '已更新' : toggle.textContent);
-      return;
-    }
-
-    var nav = event.target.closest('aside [data-eva-nav-id]');
-    if (!nav) return;
-    setCenterOpen(nav.dataset.evaNavId === 'connection-center');
-    queueTuneCenter();
-  }, true);
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', queueTuneCenter, { once: true });
-  else queueTuneCenter();
-
-  window.addEventListener('hashchange', queueTuneCenter);
-
-  new MutationObserver(queueTuneCenter).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'style'] });
-})();
-</script>
 <link rel="stylesheet" href="prototype/028-connection-center-functional-v2.css">
 <script src="prototype/029-connection-center-v2-functional.js"></script>
 <link rel="stylesheet" href="prototype/030-expert-center-v1.css">
@@ -171,6 +64,7 @@
 <link rel="stylesheet" href="prototype/041-personal-conversation-columns.css">
 <script src="prototype/042-personal-conversation-columns.js"></script>
 <link rel="stylesheet" href="prototype/043-final-layout-convergence.css">
+<link rel="stylesheet" href="prototype/045-native-page-layout.css">
 <script src="prototype/044-final-layout-convergence.js"></script>
 <link rel="stylesheet" href="review/comments.css">
 <link rel="modulepreload" href="review/comments-store.mjs">
