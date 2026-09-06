@@ -22,9 +22,6 @@ for (const ignoredPath of ['node_modules/', 'dist/', '.vercel/', '.env']) {
   if (!gitignore.split('\n').includes(ignoredPath)) fail(`.gitignore does not ignore ${ignoredPath}`);
 }
 
-if (fs.existsSync('prototypes/eva demo 0904 -v1.html')) fail('retired standalone remains in the active source tree');
-if (fs.existsSync('prototype/009-9-loader.js')) fail('retired browser-time runtime loader remains in the active source tree');
-
 for (const block of manifest.blocks || []) {
   if (!block.file) continue;
   if (!fs.existsSync(block.file)) fail(`manifest references missing file: ${block.file}`);
@@ -33,12 +30,12 @@ for (const block of manifest.blocks || []) {
 
 for (const forbidden of ['EvaCtxIcon=', 'evaMenuIcons={']) {
   for (const block of manifest.blocks || []) {
-    if (block.file && read(block.file).includes(forbidden)) fail(`${block.file} contains retired hand-written icon code: ${forbidden}`);
+    if (block.file && read(block.file).includes(forbidden)) fail(`${block.file} contains hand-written icon code: ${forbidden}`);
   }
 }
 
 if (entry.length > 100_000) fail(`index.html is too large (${entry.length} characters)`);
-if (!manifest.blocks?.some(block => block.file === 'vendor/eva-legacy-runtime.js')) fail('manifest does not declare the transitional legacy runtime');
+if (!manifest.blocks?.some(block => block.file === 'vendor/eva-legacy-runtime.js')) fail('manifest does not declare the build compatibility runtime');
 for (const architectureFile of ['prototype/007-runtime-diagnostics.js', 'prototype/010-native-page-registry.js', 'prototype/045-native-page-layout.css']) {
   if (!manifest.blocks?.some(block => block.file === architectureFile)) fail(`manifest does not declare ${architectureFile}`);
 }

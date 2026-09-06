@@ -136,7 +136,7 @@
 
   function currentModeFromLocation() {
     var hash = String(location.hash || '');
-    if (/^#\/(collab|messages|contacts|drive|overview)(?:[/?]|$)/.test(hash)) return 'collaboration';
+    if (/^#\/(collab|messages|contacts|drive)(?:[/?]|$)/.test(hash)) return 'collaboration';
     if (hash.indexOf('evaMode=collaboration') >= 0) return 'collaboration';
     return 'personal';
   }

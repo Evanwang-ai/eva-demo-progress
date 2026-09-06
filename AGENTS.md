@@ -1,28 +1,25 @@
-# Eva 双模式探索原型
+# Eva 模块化原型
 
 本目录继承 `D:\Geely\AGENTS.md` 的全部约束；以下规则只补充本专项容易重复出错的客户端外壳边界。
 
 ## 客户端窗口外壳
 
 - Eva 同学是桌面客户端，不是网页产品。原型中的 `.topbar` 表示客户端系统标题栏，是所有页面共享且必须持续可见的窗口外壳。
-- 新增或修改协作概览、消息、Space、云盘、通讯录等一级页面时，只替换标题栏下方的内容区；不得从视口 `top: 0` 覆盖标题栏，也不得为某个页面复制、重造或省略标题栏。
+- 新增或修改消息、Space、云盘、通讯录等一级页面时，只替换标题栏下方的内容区；不得从视口 `top: 0` 覆盖标题栏，也不得为某个页面复制、重造或省略标题栏。
 - 一级页面禁止使用全屏或 `position: fixed` 根节点覆盖现有应用。一级页面只能由 React Router 选择并挂载到原生 Outlet 中的唯一页面宿主；页面内部标题属于内容标题，不能替代系统标题栏。
 - 弹层、抽屉和遮罩也要先判断其归属范围。除非明确评审的是整个窗口级阻断态，否则默认限制在标题栏下方的客户端内容区。
 - 交付前静态检查所有新增一级页面根节点，确认系统标题栏中的品牌、Token、帮助、反馈及窗口控制不会被页面内容遮挡。静态检查只能证明源码边界正确，不能表述为已经完成视觉或交互验收。
 
 ## 当前工作稿
 
-- 当前唯一页面入口为 `index.html`，业务模块位于 `prototype/`。`prototype-manifest.json` 是源码职责与装配顺序清单，`index.html` 是浏览器实际加载入口；两者由合同检查保持一致。不得恢复 22MB 自包含 HTML，也不得保留第二份同步入口。
-- 历史 `009-drive-demo-seed.js` 已按领导 0904 拆分思路拆成独立职责：`009-0` 时间、`009-1` 云盘数据、`009-2` 供应链数据、`009-3` IM 数据在浏览器加载；`009-4` 补丁注册器、`009-5` IM 补丁、`009-6` 通用补丁、`009-7` 侧栏/路由补丁、`009-8` 自动化补丁只在 Node 构建阶段运行。旧 `009-9` 浏览器加载器已删除，不得恢复。
+- 当前唯一页面入口为 `index.html`，业务模块位于 `prototype/`。`prototype-manifest.json` 是源码职责与装配顺序清单，`index.html` 是浏览器实际加载入口；两者由合同检查保持一致。仓库只维护这一套模块化页面源码。
+- `009-0` 维护时间，`009-1` 维护云盘数据，`009-2` 维护供应链数据，`009-3` 维护 IM 数据；`009-4` 是补丁注册器，`009-5` 是 IM 补丁，`009-6` 是通用补丁，`009-7` 是侧栏/路由补丁，`009-8` 是自动化补丁。`009-0` 至 `009-3` 在浏览器加载，`009-4` 至 `009-8` 只在 Node 构建阶段运行。
 - `009-5` 至 `009-8` 只能通过 `window.__evaPatch` 注册，由 `tools/build-runtime.mjs` 在构建时按固定顺序执行并生成 `dist/vendor/eva-runtime.module.js`。浏览器禁止读取、拼接、编译 `eva-legacy-runtime.js`。修改补丁链后必须运行 `node tools/patch-hash.mjs` 与 `node --check dist/vendor/eva-runtime.module.js`。
 - 项目仓库为 `https://github.com/labilio/eva-demo-progress`；线上评审入口为 `https://eva-demo-progress.vercel.app/`。本地在仓库根目录运行 `npm start`，默认访问 `http://127.0.0.1:4173/`。
-- GitHub、Vercel 和本地不再维护三份页面：三者使用同一套模块化源码。功能分支用于并行开发和评审，GitHub `main` 是 Vercel 生产发布的唯一来源；未经明确授权不得把功能分支合并或推送到 `main`。
-- `vendor/eva-legacy-runtime.js` 只是从历史 Demo 抽出的迁移依赖，不是 Eva 产品或设计参照。AionUI 与新 Eva 没有产品关系；新增能力不得照搬或参照 AionUI，后续应按专项计划逐步移除该依赖。
+- GitHub、Vercel 和本地使用同一套模块化源码。功能分支用于并行开发和评审，GitHub `main` 是 Vercel 生产发布的唯一来源；未经明确授权不得把功能分支合并或推送到 `main`。
+- `vendor/eva-legacy-runtime.js` 是当前构建兼容依赖，不是 Eva 产品或设计参照。AionUI 与 Eva 没有产品关系；新增能力不得照搬或参照 AionUI。
 - 本地预览必须通过 `npm start` 使用 HTTP，不以 `file://` 作为运行合同。
-- `prototypes/eva-个人协作双模式-消息层级方案-工作稿.html` 及 `artifacts/source/build-message-hierarchy.mjs` 属于旧消息层级构建链，不再作为现行工作稿或修改入口，也不得用于覆盖当前工作稿。
-- `prototypes/eva-个人协作双模式-消息层级方案-9.2-v1.html` 是 2026-09-02 确认的评审快照，不得直接修改或由拼接脚本覆盖。
-- `prototypes/eva-个人协作双模式-方案A.html` 是受保护的参照副本，不得直接修改。
-- 项目群聊的现行结构只允许为“大群 → 可选子区”。不得重新引入项目内分类数据、分类标题、分类下拉、管理分组入口，或通过 CSS 隐藏这些旧结构。
+- 项目群聊的现行结构为“大群 → 可选子区”。数据模型、标题、筛选和管理入口都必须遵循这一层级。
 
 ## 现行架构图（接手前必读）
 
@@ -33,8 +30,8 @@
 
 本地工作区
   ├─ index.html                         唯一页面入口
-  ├─ prototype/                        Eva 数据、样式和迁移模块
-  ├─ vendor/eva-legacy-runtime.js      临时历史运行时，只作为构建输入
+  ├─ prototype/                        Eva 数据、样式和功能模块
+  ├─ vendor/eva-legacy-runtime.js      构建兼容运行时，只作为构建输入
   ├─ review/                           独立云端批注工具层
   └─ prototype-manifest.json           入口加载顺序与文件登记表
           │
@@ -81,7 +78,6 @@ EvaApp
 └─ Router Outlet                 一级页面唯一出口
    ├─ PersonalEvaPage            /guid、/conversation/:id
    ├─ TeamMessagesPage           /messages（含关注/最近、我的 AI 模式）
-   ├─ CollaborationOverviewPage  /overview
    ├─ ProjectsPage               /collab
    ├─ ContactsPage               /contacts
    ├─ DrivePage                  /drive
@@ -90,14 +86,14 @@ EvaApp
    └─ ConnectionCenterPage       /eva-stub/技能
 ```
 
-`010-native-page-registry.js` 是迁移桥：它把尚未改写成 React 组件的现有页面挂入 React Route 创建的宿主，并在路由离开时执行 cleanup。它不是第二个页面控制器，禁止由它创建 fixed 页面、修改路由或管理导航选中态。每个页面完成 React 化后，应删除对应注册桥、旧 fixed CSS 与 DOM 增强代码。
+`010-native-page-registry.js` 是非 React 页面与 React Route 宿主之间的注册桥，并在路由离开时执行 cleanup。它不是第二个页面控制器，禁止由它创建 fixed 页面、修改路由或管理导航选中态。页面完成 React 化后，应同步删除对应注册桥、页面 CSS 与 DOM 增强代码。
 
 ### 修改应落在哪一层
 
 | 要修改的内容 | 唯一职责位置 | 禁止做法 |
 | --- | --- | --- |
 | Demo 时间常量 | `009-0-demo-time.js` | 散落到页面模板或 CSS |
-| 云盘示例数据 | `009-1-data-drive.js` | 在视图打开时临时拼第二份数据 |
+| 云盘示例数据 | `009-1-data-drive.js` | 在视图打开时另拼第二份数据 |
 | 供应链项目、任务、人员数据 | `009-2-data-supply.js` | 为某个页面复制一套项目对象 |
 | 团队消息、AI 身份、OpenClaw session 示例数据 | `009-3-data-im.js` | 在 DOM 模板中硬编码消息或会话 |
 | 补丁注册、锚点替换公共能力 | `009-4-registry.js` | 新增另一份 patch 数组、Observer 或全局替换器 |
@@ -105,7 +101,7 @@ EvaApp
 | 非 IM 的通用运行时适配 | `009-6-patch-general.js` | 把明确属于侧栏或自动化的修改塞进来 |
 | 一级导航、侧栏与路由状态 | `009-7-patch-sider.js` | 用 DOM class、模拟点击或手改 `aria-current` 维护选中态 |
 | 自动化任务页面适配 | `009-8-patch-automation.js` | 在其他入口覆盖一层自动化页面 |
-| 构建、顺序执行与唯一产物 | `tools/build-runtime.mjs` | 在浏览器读取、拼接或编译 legacy runtime |
+| 构建、顺序执行与唯一产物 | `tools/build-runtime.mjs` | 在浏览器读取、拼接或编译兼容运行时 |
 | 非 React 页面迁移桥 | `010-native-page-registry.js` + 对应页面模块 | 向 `document.body` 追加一级页面、用 fixed/z-index 盖住 Outlet |
 | Eva 页面样式 | 对应的 `prototype/*.css`，优先复用现有 token/组件 | 在 JS 里追加页面级 style、靠更高优先级掩盖旧规则 |
 | 云端批注 | `review/` 与 `supabase/` | 混入 Eva 产品信息架构或占用产品内容区域 |
@@ -113,14 +109,14 @@ EvaApp
 ### 架构不变量
 
 1. DOM 中只能有一个 Eva 应用实例、一个可见 IM 会话实例和一个一级导航状态源。
-2. `009-5` 至 `009-8` 只能注册补丁；只有 `tools/build-runtime.mjs` 可以读取并装配历史运行时，浏览器只加载构建产物。
+2. `009-5` 至 `009-8` 只能注册补丁；只有 `tools/build-runtime.mjs` 可以读取并装配兼容运行时，浏览器只加载构建产物。
 3. 同一种产品能力只能有一个业务组件。入口差异必须表现为数据和配置差异，不能复制 DOM、CSS 与事件。
 4. 路由是一级导航选中态的唯一权威源；业务数据是会话、任务和文件内容的权威源。不得再把 DOM 当状态仓库。
 5. 锚点变化必须显式失败，禁止“找不到就跳过”或用更宽泛的字符串替换继续运行。
 6. 调整文件或加载顺序时，同步更新 `index.html` 与 `prototype-manifest.json`；二者必须描述同一条链。
-7. 架构迁移完成时必须删除被替代的入口、状态、CSS 和监听器，不能把死代码留作“备用方案”。
+7. 一个能力只保留当前入口、状态、CSS 和监听器；不保留平行实现或无调用方代码。
 8. 一级页面只允许挂载在 Router Outlet 的路由宿主中；Modal、Popover、右键菜单和批注侧栏可以使用 Portal，但不能承担页面导航。
-9. 当前 18.6 MB legacy runtime 仍是迁移期体积债务。构建时装配已经消除浏览器现场编译与白屏风险，但彻底降低首次解析时间仍需继续把 legacy 业务域迁出并进行代码分割；不得把当前桥接阶段描述为最终 React 架构。
+9. 当前兼容运行时约 18.6 MB。构建时装配避免浏览器现场编译；降低首次解析时间需要继续将业务域组件化并进行代码分割。当前架构状态必须如实描述。
 
 ### 改动后的最低验证门槛
 
@@ -138,11 +134,11 @@ git diff --check
 
 ## 客户设计规范
 
-- 客户提供的设计规范源为 `gds-for-ai2.0.zip`（Eva GDS for AI 2.0）。它是个人 Eva 桌面体验的设计依据；AionUI、旧 Demo 和常见 AI 聊天产品都不能替代该规范。
+- 客户提供的设计规范源为 `gds-for-ai2.0.zip`（Eva GDS for AI 2.0）。它是个人 Eva 桌面体验的设计依据；AionUI 和常见 AI 聊天产品都不能替代该规范。
 - GDS 的核心工程材料包括 `design.md`、`tokens.dtcg.json`、`tokens.json`、`components.json`、`validate.mjs` 以及 `assets/reference/` 六个状态参考图。实施相关页面前必须同时核对规范、语义 token、组件合同和对应状态截图，不能只看一张图近似手搓。
 - 当前 GDS 已验证的基准是 1200 × 800 桌面视口；个人 Eva 常规态使用 260/940 骨架、776 px 居中主列，主色为 `#1563EB`，圆角按 8/12/16/20 分级。生成中与完成态属于同一任务生命周期，不得拆成彼此无关的平行页面。
 - GDS 的适用范围是个人 Eva 体验。团队 IM 仍以 Octo-Web 成熟 IM 能力为标准；Eva 自有且需长期维护的通用界面优先复用现有封装或 Semi UI。三者边界不得混淆。
-- GDS 原始归档尚未作为可修改源码使用；合入仓库时应完整保留原始规范与参考资产，并将具体实现通过语义 token/组件适配层接入，不把原始色值散落到业务 CSS。
+- GDS 应通过语义 token 和组件适配层接入，不把原始色值散落到业务 CSS。实现时以规范、组件合同和参考状态图为共同依据。
 
 ## IM 内核与图标规范
 
@@ -152,7 +148,7 @@ git diff --check
 - 消息行、连续消息、头像、时间、Hover、右键菜单、多选、引用、文件、任务卡片和输入区必须使用统一 IM 内核的组件合同。发现差异时修复公共实现或适配层，不在单一入口叠加视觉补丁。
 - Eva 自有且需要持续维护的页面外壳、导航、弹窗、表单、按钮、列表和空状态优先使用现有项目封装；没有封装时使用 Semi UI。不得为了技术栈统一而用 Semi UI 重造行为完整的 Octo IM 业务组件。
 - 所有应用图标继续使用既有 Lucide 组件与语义。Lucide 图标允许重复使用：同一语义应优先复用同一图标，不同语义只在确实会造成识别混淆时调整；禁止把“每个图标只能出现一次”当作规则。
-- 禁止手写 SVG、Unicode 图形或临时 CSS 图形替代已有 Lucide 图标。若当前 bundle 没有所需导出，使用项目既有的 `createLucideIcon` 和 Lucide 官方节点定义创建组件，并保留标准 Lucide 类名、尺寸和 `currentColor` 行为。
+- 禁止手写 SVG、Unicode 图形或 CSS 图形替代已有 Lucide 图标。若当前 bundle 没有所需导出，使用项目既有的 `createLucideIcon` 和 Lucide 官方节点定义创建组件，并保留标准 Lucide 类名、尺寸和 `currentColor` 行为。
 
 ## UI 状态归属与迁移规则
 
@@ -160,7 +156,7 @@ git diff --check
 - 一级导航的唯一权威源是 URL／路由。选中态只能从当前路由推导；禁止通过“先点击另一个导航，再用覆盖层改结果”、手动互斥 `aria-current` 或捕获阶段拦截点击来模拟导航。
 - 团队 IM 的入口模式由 `evaMessageMode` 决定，消息－关注/最近与团队－我的 AI 各自的数据由 `messageSource(evaMessageMode)` 提供，并统一交给 `ChannelsView`。My AI 左栏必须用身份分组展示 OpenClaw session，不得显示关注/最近或子区等团队会话控件。模式变化必须通过组件身份或公共状态控制器重置内部会话状态，不得让上一模式的选中会话残留到下一模式。
 - DOM 增强脚本只能补充 React 未承载的独立 Demo 表面，不得把 DOM、MutationObserver、定时器或自定义事件作为 React 页面主状态。不得在一级导航或统一 IM 上新增捕获监听与 `stopImmediatePropagation()` 旁路。
-- 迁移只有在旧入口、旧数据副本、旧 CSS 状态选择器和旧事件控制器一并删除后才算完成；“已经没有调用方”不是保留平行实现的理由。
+- 每项能力只允许一个入口、一个数据源、一组 CSS 状态选择器和一个事件控制器；无调用方代码必须删除。
 - 涉及导航、路由或 IM 数据源的改动，交付前必须运行语义合同检查及最终生成 ES 模块语法检查。检查应验证状态归属和禁止的旁路模式，不使用脱离业务域的全局数量阈值代替架构判断。
 
 ## Git、发布与验收状态

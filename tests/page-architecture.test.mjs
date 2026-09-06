@@ -21,7 +21,7 @@ test('正式一级路由在原生 PanelRoute 中注册并位于兜底路由之�
   const { source } = createPatchedRuntime();
   const wildcardIndex = source.indexOf('path:"*"');
 
-  for (const route of ['/contacts', '/drive', '/overview']) {
+  for (const route of ['/contacts', '/drive']) {
     const routeIndex = source.indexOf(`path:"${route}"`);
     assert.ok(routeIndex >= 0, `${route} 未注册`);
     assert.ok(routeIndex < wildcardIndex, `${route} 位于兜底路由之后`);
@@ -35,7 +35,6 @@ test('侧栏模式和唯一选中态完全由路由推导', () => {
   for (const [route, selection] of [
     ['/contacts', 'contacts'],
     ['/drive', 'drive'],
-    ['/overview', 'overview'],
   ]) {
     assert.ok(source.includes(`rt==="${route}"`), `${route} 未进入侧栏路由推导`);
     assert.ok(source.includes(`return"${selection}"`), `${selection} 未成为路由选中态`);
@@ -56,7 +55,7 @@ test('一级页面只挂入路由宿主，不再追加到 document.body', () => 
   assert.doesNotMatch(source, /document\.body\.appendChild\((?:root|page|center)\)/);
   assert.doesNotMatch(source, /document\.body\.insertAdjacentHTML\([^,]+,\s*build(?:Workboard|Automation)\(/);
   assert.doesNotMatch(source, /stopImmediatePropagation\(\)/);
-  for (const pageId of ['contacts', 'drive', 'overview', 'workboard', 'digital-employees', 'connection-center', 'personal']) {
+  for (const pageId of ['contacts', 'drive', 'workboard', 'digital-employees', 'connection-center', 'personal']) {
     assert.match(source, new RegExp(`__evaNativePages\\.register\\(['"]${pageId}['"]`));
   }
 });
