@@ -18,23 +18,35 @@
 .eva-ai-team__sidebar {
   /* Match existing personal Eva list typography and message rail surfaces. */
   --eva-rail-divider: var(--color-border-2, var(--semi-color-border, #e5e6eb));
-  --eva-rail-caption: var(--semi-color-text-2, #8f959e);
-  --eva-rail-primary: #1f2329;
-  --eva-rail-secondary: #30343b;
-  --eva-rail-time: #8d95a1;
-  --eva-rail-hover: #e2e3e5;
-  --eva-rail-selected: #e5e6eb;
-  --eva-rail-name-size: var(--gds-type-label-medium-font-size);
-  --eva-rail-label-size: var(--gds-type-label-font-size);
-  --eva-rail-line-height: var(--gds-type-label-medium-line-height);
-  /* The identity label is 14/22. Keep the circular avatar below that line height. */
-  --eva-rail-identity-avatar-size: 20px;
-  --eva-rail-identity-height: 34px;
-  --eva-rail-session-height: 38px;
+  --eva-rail-caption: var(--wk-icon-default, rgba(28, 28, 35, .6));
+  --eva-rail-primary: var(--wk-text-strong, rgba(28, 28, 35, .9));
+  /* These row-state values deliberately mirror the final message-rail rules
+     in 016. A session is the My AI equivalent of a group-chat subzone. */
+  --eva-rail-secondary: var(--wk-icon-default, rgba(28, 28, 35, .6));
+  --eva-rail-time: var(--wk-icon-muted, rgba(28, 28, 35, .4));
+  --eva-rail-hover: var(--wk-bg-item-hover, rgba(46, 50, 56, .09));
+  --eva-rail-selected: #f0f1f2;
+  --eva-rail-group-hover: var(--wk-bg-item-hover, rgba(46, 50, 56, .09));
+  --eva-rail-group-radius: 7px;
+  --eva-rail-primary-row-radius: var(--wk-r-xs, 3px);
+  --eva-rail-nested-row-radius: var(--wk-r-xs, 3px);
+  --eva-rail-name-size: 13px;
+  --eva-rail-label-size: 13px;
+  --eva-rail-line-height: 1.4;
+  /* Match the message rail's primary group rows: 22px identity avatar,
+     13px label and an 8px icon/text gap. */
+  --eva-rail-identity-avatar-size: 22px;
+  --eva-rail-identity-height: 32px;
+  --eva-rail-session-height: 28px;
   --eva-rail-level-indent: 12px;
+  /* Group chevrons use a 22px slot for a centered 12px icon. Keep an
+     identity avatar's visible left edge aligned to that icon. */
+  --eva-rail-identity-content-inset: 13px;
   box-sizing: border-box;
-  /* 8px inset + 22px avatar slot + 8px gap; child text advances by 20px. */
-  --eva-rail-session-indent: 58px;
+  /* Group title → assistant label → session label advances by 12px.
+     The session has no leading avatar, so its start includes the 22px avatar
+     and 8px icon/text gap that precede an assistant label. */
+  --eva-rail-session-indent: calc(var(--eva-rail-identity-avatar-size) + var(--gds-space-2) + var(--eva-rail-level-indent));
   position: relative;
   flex: 0 0 var(--eva-conversation-rail-current);
   width: var(--eva-conversation-rail-current);
@@ -85,59 +97,73 @@
   color: var(--gds-color-surface-primary);
   flex-shrink: 0;
 }
-.eva-ai-team__roles { flex: 1; min-height: 0; overflow-y: auto; padding: var(--gds-space-2) var(--gds-space-3) var(--gds-space-4); }
+.eva-ai-team__roles { flex: 1; min-height: 0; overflow-y: auto; padding: var(--gds-space-3) var(--gds-space-2-5) var(--gds-space-3); }
 .eva-ai-team__role-group + .eva-ai-team__role-group {
-  margin-top: 16px;
+  /* Match adjacent project groups: whitespace separates sections; a divider
+     would make the AI rail look more segmented than the message rail. */
+  margin-top: 6px;
 }
 .eva-ai-team__group-toggle {
   display: flex;
   width: 100%;
-  min-height: 30px;
+  min-height: 32px;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: var(--gds-space-1);
+  padding: 0 var(--gds-space-2);
   border: 0;
-  border-radius: var(--gds-radius-control);
+  border-radius: var(--eva-rail-group-radius);
   background: transparent;
   color: var(--eva-rail-caption);
   text-align: left;
   cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
 }
-.eva-ai-team__group-toggle:hover { color: var(--eva-rail-primary); }
+.eva-ai-team__group-toggle:hover { background: var(--eva-rail-group-hover); color: var(--eva-rail-primary); }
 .eva-ai-team__group-toggle:focus-visible { outline: 2px solid var(--gds-color-action-primary); outline-offset: -2px; }
 .eva-ai-team__group-title {
   min-width: 0;
   flex: 1;
   margin: 0;
-  font-size: var(--gds-type-label-medium-font-size);
-  line-height: var(--gds-type-label-medium-line-height);
-  font-weight: var(--gds-font-weight-medium);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--gds-font-weight-semibold);
 }
 .eva-ai-team__group-count { min-width: 18px; color: var(--eva-rail-time); font-size: var(--gds-type-caption-font-size); line-height: var(--gds-type-caption-line-height); font-weight: var(--gds-font-weight-regular); text-align: right; }
 .eva-ai-team__group-chevron { flex: 0 0 22px; transition: transform 120ms ease; }
 .eva-ai-team__group-chevron.is-expanded { transform: rotate(90deg); }
-.eva-ai-team__group-content { margin-top: 4px; }
-.eva-ai-team__identity + .eva-ai-team__identity { margin-top: 2px; }
-.eva-ai-team__identity-heading { position: relative; display: flex; align-items: center; border-radius: var(--gds-radius-control); }
+.eva-ai-team__group-content { margin-top: 0; }
+.eva-ai-team__identity + .eva-ai-team__identity { margin-top: 0; }
+.eva-ai-team__identity-heading {
+  display: flex;
+  min-height: var(--eva-rail-identity-height);
+  align-items: center;
+  gap: var(--gds-space-1);
+  margin-bottom: 0;
+  border-radius: var(--eva-rail-primary-row-radius);
+  transition: background-color 120ms ease;
+}
+.eva-ai-team__identity-heading:hover,
+.eva-ai-team__identity-heading:focus-within { background: var(--eva-rail-hover); }
 .eva-ai-team__identity-button,
 .eva-ai-team__session,
 .eva-ai-team__digital-button {
   min-width: 0;
   border: 0;
-  border-radius: var(--gds-radius-control);
   background: transparent;
   color: inherit;
   text-align: left;
   font: inherit;
   cursor: pointer;
 }
-.eva-ai-team__identity-button { display: flex; align-items: center; gap: 8px; min-height: var(--eva-rail-identity-height); padding: 0 32px 0 8px; flex: 1; }
+.eva-ai-team__identity-button { display: flex; align-items: center; gap: var(--gds-space-2); min-height: var(--eva-rail-identity-height); padding: 0 0 0 var(--eva-rail-identity-content-inset); border-radius: var(--eva-rail-primary-row-radius); flex: 1; }
 .eva-ai-team__identity-name { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--eva-rail-name-size); line-height: var(--eva-rail-line-height); font-weight: var(--gds-font-weight-medium); color: var(--eva-rail-primary); }
 .eva-ai-team__identity-button > svg,
 .eva-ai-team__identity-button > .ai-badge,
 .eva-ai-team__identity-button > .eva-identity-avatar { flex-shrink: 0; }
 .eva-ai-team__identity-button > .eva-identity-name-row { flex: 1; }
-.eva-ai-team__chevron { position: absolute; right: 10px; width: 16px; height: 16px; color: var(--gds-color-text-secondary); }
+/* The assistant disclosure is a prototype-specific 12px right-chevron;
+   it is not the group-chat subzone toggle. */
+.eva-ai-team__chevron { flex: 0 0 12px; color: var(--gds-color-text-secondary); transition: transform 120ms ease; }
 .eva-ai-team__chevron.is-expanded { transform: rotate(90deg); }
 .eva-ai-team__role-label { flex-shrink: 0; font-size: var(--gds-type-caption-font-size); line-height: var(--gds-type-caption-line-height); color: var(--gds-color-text-secondary); font-weight: var(--gds-font-weight-regular); }
 .eva-ai-team__identity-status { margin: 0 0 var(--gds-space-2) var(--gds-space-8); color: var(--gds-color-text-secondary); font-size: var(--gds-type-caption-font-size); line-height: var(--gds-type-caption-line-height); }
@@ -148,12 +174,14 @@
   gap: var(--gds-space-1) var(--gds-space-2);
   min-height: var(--eva-rail-session-height);
   align-items: center;
-  padding: 4px 8px 4px var(--eva-rail-session-indent);
+  padding: 2px var(--gds-space-2) 2px var(--eva-rail-session-indent);
+  border-radius: var(--eva-rail-nested-row-radius);
 }
 /* Actions share the time slot; sibling buttons avoid nested interactive elements. */
-.eva-ai-team__session-row { position: relative; border-radius: var(--gds-radius-control); }
+.eva-ai-team__session-row { position: relative; min-height: var(--eva-rail-session-height); border-radius: var(--eva-rail-nested-row-radius); transition: background-color 120ms ease; }
 .eva-ai-team__session-row:hover { background: var(--eva-rail-hover); }
-.eva-ai-team__session-row.is-selected { background: var(--eva-rail-selected); }
+.eva-ai-team__session-row.is-selected,
+.eva-ai-team__session-row.is-selected:hover { background: var(--eva-rail-selected); box-shadow: none; }
 .eva-ai-team__session-actions { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px; opacity: 0; pointer-events: none; }
 .eva-ai-team__session-actions .semi-button { width: 24px; height: 24px; min-height: 24px; padding: 0; color: var(--eva-rail-time); }
 .eva-ai-team__session-actions .semi-button:hover,
@@ -165,15 +193,17 @@
 .eva-ai-team__session-row .eva-ai-team__session { grid-template-columns: minmax(0, 1fr) 50px; }
 .eva-ai-team__session-row .eva-ai-team__session-time { justify-self: end; }
 .eva-ai-team__session-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.eva-ai-team__session-title { grid-column: 1; font-size: var(--eva-rail-label-size); line-height: var(--gds-type-label-line-height); font-weight: var(--gds-font-weight-regular); color: var(--eva-rail-secondary); }
-.eva-ai-team__session.is-selected .eva-ai-team__session-title { color: var(--eva-rail-primary); font-weight: var(--gds-font-weight-regular); }
+.eva-ai-team__session-title { grid-column: 1; font-size: var(--eva-rail-label-size); line-height: var(--eva-rail-line-height); font-weight: var(--gds-font-weight-regular); color: var(--eva-rail-secondary); }
+.eva-ai-team__session.is-selected .eva-ai-team__session-title,
+.eva-ai-team__session-row.is-selected .eva-ai-team__session-title { color: var(--eva-rail-primary); font-weight: var(--gds-font-weight-regular); }
 .eva-ai-team__session-time { grid-column: 2; grid-row: 1; align-self: center; white-space: nowrap; color: var(--eva-rail-time); font-size: var(--gds-type-caption-font-size); line-height: var(--gds-type-caption-line-height); font-weight: var(--gds-font-weight-regular); }
-.eva-ai-team__identity-button:hover,
 .eva-ai-team__session:hover,
 .eva-ai-team__digital-button:hover { background: var(--eva-rail-hover); }
+.eva-ai-team__identity-heading .eva-ai-team__identity-button:hover,
+.eva-ai-team__session-row > .eva-ai-team__session:hover { background: transparent; }
 .eva-ai-team__session.is-selected,
 .eva-ai-team__digital-button.is-selected { background: var(--eva-rail-selected); }
-.eva-ai-team__digital-button { display: flex; align-items: center; width: 100%; gap: var(--gds-space-2); padding: var(--gds-space-2); }
+.eva-ai-team__digital-button { display: flex; align-items: center; width: 100%; gap: var(--gds-space-2); padding: var(--gds-space-2); border-radius: var(--eva-rail-primary-row-radius); }
 .eva-ai-team__digital-button .eva-ai-team__group-title { padding: 0; }
 .eva-ai-team__digital-button > .eva-ai-team__role-label { margin-left: auto; }
 .eva-ai-team__main {
@@ -292,6 +322,7 @@
 .eva-ai-team .wk-chat-conversation-header-channel-avatar,
 .eva-ai-team .wk-msg-avatar { overflow: visible; }
 .eva-ai-team__identity-heading .ai-badge { flex-shrink: 0; }
+.eva-ai-team__conversation-breadcrumb .wk-chat-conversation-header-parent-group { cursor: default; }
   .eva-create-assistant-modal { display: flex; width: 100%; height: min(650px, calc(100dvh - 76px)); box-sizing: border-box; font-family: var(--gds-font-family-sans); font-size: 13px; line-height: 20px; flex-direction: column; overflow: hidden; border: 1px solid #dfe2e6; border-radius: 12px; background: #fff; box-shadow: 0 24px 64px rgb(31 35 41 / 24%); }
   .eva-create-assistant-modal__head { display: flex; min-height: 92px; box-sizing: border-box; flex-shrink: 0; align-items: flex-start; gap: 14px; padding: 24px 28px 12px; }
   .eva-create-assistant-modal__mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: #f2f3f5; color: #4e5969; font-weight: 700; }
@@ -311,6 +342,12 @@
   .eva-create-assistant-modal__hint { margin: 0 0 14px; color: #646a73; font-size: 13px; }
   .eva-create-assistant-modal__editor { display: block; width: 100%; height: calc(100% - 35px); min-height: 80px; border: 0; outline: none; resize: none; background: transparent; color: var(--gds-color-text-primary); font: inherit; font-size: 14px; line-height: 22px; }
   .eva-create-assistant-modal__editor::placeholder { color: var(--gds-color-text-placeholder); }
+  .eva-editor-identity-fields { display: flex; min-height: 0; height: 100%; flex-direction: column; gap: 12px; }
+  .eva-editor-identity-fields .eva-create-assistant-modal__editor { min-height: 80px; flex: 1; }
+  .eva-editor-avatar-field { display: grid; gap: 6px; color: var(--gds-color-text-secondary); font-size: 13px; line-height: 20px; }
+  .eva-editor-avatar-field input { width: 100%; box-sizing: border-box; border: 1px solid var(--gds-color-border-subtle); border-radius: 8px; background: var(--gds-color-surface-primary); padding: 8px 10px; color: var(--gds-color-text-primary); font: inherit; }
+  .eva-editor-avatar-field input:focus-visible { outline: 2px solid var(--gds-color-action-primary); outline-offset: 1px; }
+  .eva-editor-avatar-field small { color: var(--gds-color-text-secondary); font-size: 12px; line-height: 18px; }
   .eva-create-assistant-modal__footer { box-sizing: border-box; display: flex; flex-shrink: 0; min-height: 68px; align-items: center; gap: 10px; padding: 0 24px; border-top: 1px solid #e5e7ea; }
   .eva-create-assistant-modal__chip { padding: 8px 12px; border-radius: 8px; background: #f5f6f7; color: #4e5969; font-size: 13px; }
   .eva-create-assistant-modal__spacer { flex: 1; }
@@ -418,14 +455,16 @@
 .eva-ai-team__identity-heading:has(> .eva-ai-team__menu-anchor):focus-within .eva-ai-team__identity-button { padding-right: 86px; }
 .eva-ai-team__identity-heading .eva-ai-team__more { width: 24px; min-height: 24px; height: 24px; padding: 0; }
 .eva-ai-team__fixed-group-tree { margin-bottom: 16px; }
-.eva-ai-team__fixed-group-tree .wk-conv-compact-item {
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread) {
   box-sizing: border-box; min-height: var(--eva-rail-identity-height); height: auto;
-  padding: 0 8px; gap: 8px; border-radius: var(--gds-radius-control);
-  font-size: var(--eva-rail-name-size); line-height: var(--eva-rail-line-height);
+  padding: 5px var(--gds-space-2) 5px var(--eva-rail-identity-content-inset);
+  gap: var(--gds-space-2); border-radius: var(--wk-r-xs, 3px);
+  color: var(--eva-rail-primary); font-size: var(--eva-rail-name-size); line-height: var(--eva-rail-line-height);
 }
-.eva-ai-team__fixed-group-tree .wk-conv-compact-name { font-weight: var(--gds-font-weight-medium); }
-.eva-ai-team__fixed-group-tree .wk-conv-compact-icon { width: 22px; flex: 0 0 22px; }
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread) .wk-conv-compact-name { color: var(--eva-rail-primary); font-weight: var(--gds-font-weight-medium); }
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread) .wk-conv-compact-icon { width: 22px; flex: 0 0 22px; }
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread) .wk-conv-compact-drag-handle { display: none; }
 .eva-ai-team__fixed-group-tree .wk-conv-compact-item--thread { padding-left: 8px; min-height: var(--eva-rail-identity-height); }
 .eva-ai-team__fixed-group-tree .wk-conv-compact-item--thread .wk-conv-compact-name { font-weight: var(--gds-font-weight-regular); }
-.eva-ai-team__fixed-group-tree .wk-conv-compact-item:hover { background: var(--eva-rail-hover); }
-.eva-ai-team__fixed-group-tree .wk-conv-compact-item--selected { background: var(--eva-rail-selected); }
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread):hover { background: var(--eva-rail-hover); }
+.eva-ai-team__fixed-group-tree > .wk-conv-compact-item:not(.wk-conv-compact-item--thread).wk-conv-compact-item--selected { background: var(--eva-rail-selected); }

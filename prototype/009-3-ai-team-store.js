@@ -27,7 +27,7 @@
     return {sidebarVariant: 'ai-sessions', conversationOnly: true, presentation: 'ai-direct',
       selectedThreadId: selected.id, channels: [{...group, name, threads, unread: 0,
         sessionTitle: selected.name, identityName: name, identityAppearance: appearance,
-        identityAvatarUrl: appearance.logo, conversationKind: 'ai-private-group'}],
+        identityAvatarUrl: appearance.avatar || appearance.logo, conversationKind: 'ai-private-group'}],
       cats: [], messages: {}, threadMessages: Object.fromEntries(threads.map(t => [t.id, messages(t.short_id)])),
       scopeNameOf: {}};
   };
@@ -50,7 +50,8 @@
     toolset: typeof value?.toolset === 'string' ? value.toolset : '四两的产品脑袋',
     identity: typeof value?.identity === 'string' ? value.identity : '通用助理',
     personality: typeof value?.personality === 'string' ? value.personality : '清晰、友善',
-    skills: Array.isArray(value?.skills) ? value.skills.filter(x => typeof x === 'string') : []
+    skills: Array.isArray(value?.skills) ? value.skills.filter(x => typeof x === 'string') : [],
+    avatar: typeof value?.avatar === 'string' && /^(?:https:\/\/\S+|data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+)$/.test(value.avatar.trim()) ? value.avatar.trim() : ''
   });
   const makeIdentity = (id, role, name, local, time) => ({
     id, role, name, sourceAssistantId: local.id,
@@ -133,6 +134,28 @@
         });
       }
     } catch (_) { warning = '无法读取已保存的数据，已恢复初始内容。'; }
+    // 早期“我的 AI”页面隐藏了本地助理入口，导致已经保存的演示状态
+    // 可能保留来源助理却没有可选的 AI 身份。恢复缺失身份与其首个会话，
+    // 但绝不改写仍存在的身份、会话或草稿。
+    if (!state.restoredLocalAssistantIdentitiesV1) {
+      state.localAssistants.forEach(local => {
+        if (state.identities.some(identity => identity.role === 'assistant' && identity.sourceAssistantId === local.id)) return;
+        const preferredId = local.id === 'assistant-general' ? 'ai-general' : local.id === 'assistant-rd' ? 'ai-rd' : 'ai-local-' + local.id;
+        let identityId = preferredId, suffix = 2;
+        while (state.identities.some(identity => identity.id === identityId)) identityId = preferredId + '-' + suffix++;
+        const identity = makeIdentity(identityId, 'assistant', local.name, local, now());
+        state.identities.push(identity);
+        state.sessions.push({
+          id: identityId === 'ai-general' ? 'team-assistant-welcome' : 'team-assistant-' + local.id + '-welcome',
+          identityId: identity.id,
+          title: identityId === 'ai-general' ? '整理工作安排' : '开始新对话',
+          updatedAt: now(),
+          messages: [{id: 'restored-' + identity.id, kind: 'text', sender: {uid: identity.id, name: identity.name, color: '#1563EB', ai: true}, time: now(), text: identityId === 'ai-general' ? '把需要整理的事项发给我，我们一起安排。' : '你好，我可以协助你整理研发资料和评审要点。'}]
+        });
+      });
+      state.restoredLocalAssistantIdentitiesV1 = true;
+      try { storage?.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { warning = '本地存储不可用，刷新后数据可能丢失。'; }
+    }
     // Add review stories once; preserve edited conversations, drafts and later deletions.
     if (options.profile === 'review' && !state.reviewStoriesVersion && window.__EVA_IM_DEMO?.aiTeamSessions) {
       const base = new Date(window.__EVA_DEMO_TIME.AI_REVIEW_START).getTime();
@@ -290,7 +313,10 @@
         await simulate('sync', { identityId, sourceAssistantId: local.id, version, configuration: config });
         if (syncTokens.get(identityId) !== token) return freeze(copy(identity));
         if (!localById(local.id).online) { identity.syncStatus = 'waiting'; publish(); return freeze(copy(identity)); }
-        identity.configVersion = version; identity.configuration = config; identity.syncStatus = 'synced'; identity.lastSyncedAt = now(); publish();
+        identity.configVersion = version;
+        // A persona is its own AI identity. Keep its chosen avatar when source settings refresh.
+        identity.configuration = configuration({...config, avatar: identity.configuration.avatar || config.avatar});
+        identity.syncStatus = 'synced'; identity.lastSyncedAt = now(); publish();
       } catch (error) {
         if (syncTokens.get(identityId) === token) { identity.syncStatus = localById(local.id).online ? 'error' : 'waiting'; publish(); }
         throw error;
@@ -355,8 +381,10 @@
       const records = state.sessions.filter(s => s.identityId === identityId);
       let title = '新对话', number = 2;
       while (records.some(s => s.title === title)) title = '新对话 ' + number++;
-      const record = threadRecord(identityId, {id: id('team-thread-' + (window.crypto?.randomUUID?.() || Date.now())), identityId, title,
-        autoTitle: true, messages: [], updatedAt: now()});
+      const base = {id: id((identity.role === 'persona' ? 'team-thread-' : 'team-session-') + (window.crypto?.randomUUID?.() || Date.now())), identityId, title,
+        autoTitle: true, messages: [], updatedAt: now()};
+      // 云端分身使用团队私聊中的 topic 记录；本地助理保留自己的本地会话记录。
+      const record = identity.role === 'persona' ? threadRecord(identityId, base) : base;
       state.sessions.push(record);
       publish();
       return record.id;

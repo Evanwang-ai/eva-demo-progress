@@ -95,13 +95,16 @@ test('product copy migration preserves user text, identities and drafts', () => 
 });
 test('complete editor fields persist and local updates sync to personas without losing tabs', async()=>{
  const storage=memory(), s=make({storage});
- const configuration={identity:'角色',personality:'风格',about:'背景',skills:['整理'],collaboration:'协作说明',description:'简介',model:'Qwen3.7 Plus',toolset:'四两的产品脑袋'};
+ const configuration={identity:'角色',personality:'风格',about:'背景',skills:['整理'],collaboration:'协作说明',description:'简介',model:'Qwen3.7 Plus',toolset:'四两的产品脑袋',avatar:'https://example.test/local.png'};
  s.saveLocalAssistant({mode:'edit',id:'assistant-general',name:'通用助理',configuration}); await tick();
  const p=s.getSnapshot().identities.find(i=>i.id==='persona-initial'); assert.equal(p.configuration.about,'背景'); assert.equal(p.configuration.collaboration,'协作说明');
- const restored=make({storage}); assert.equal(restored.getSnapshot().localAssistants[0].configuration.toolset,'四两的产品脑袋');
- restored.savePersona({id:p.id,name:'我的分身',configuration:{...configuration,about:'云端背景'}});
+ const restored=make({storage}); assert.equal(restored.getSnapshot().localAssistants[0].configuration.toolset,'四两的产品脑袋'); assert.equal(restored.getSnapshot().localAssistants[0].configuration.avatar,'https://example.test/local.png');
+ restored.savePersona({id:p.id,name:'我的分身',configuration:{...configuration,about:'云端背景',avatar:'https://example.test/persona.png'}});
  assert.equal(restored.getSnapshot().identities.find(i=>i.id===p.id).configuration.about,'云端背景');
+ assert.equal(restored.getSnapshot().identities.find(i=>i.id===p.id).configuration.avatar,'https://example.test/persona.png');
  assert.equal(restored.getSnapshot().localAssistants[0].configuration.about,'背景');
+ restored.saveLocalAssistant({mode:'edit',id:'assistant-general',name:'通用助理',configuration:{avatar:'https://example.test/local-next.png'}}); await tick();
+ assert.equal(restored.getSnapshot().identities.find(i=>i.id===p.id).configuration.avatar,'https://example.test/persona.png');
  const created=await restored.createPersona('assistant-general',{name:'导入分身',configuration}); assert.equal(created.name,'导入分身'); assert.equal(created.configuration.description,'简介');
 });
 
@@ -115,6 +118,21 @@ test('new users receive one protected named assistant and no personas',()=>{
 test('review account has two assistants and two independently renameable personas',()=>{
  const s=make();assert.equal(s.getSnapshot().identities.filter(i=>i.role==='assistant').length,2);assert.equal(s.getSnapshot().identities.filter(i=>i.role==='persona').length,2);
  s.savePersona({id:'persona-initial',name:'新分身名字'});assert.equal(s.getSnapshot().identities.find(i=>i.id==='persona-initial').name,'新分身名字');
+});
+
+test('隐藏本地助理入口留下的状态会恢复本地身份和独立首会话',()=>{
+ const storage=memory();make({storage});const saved=JSON.parse(storage.getItem());
+ const hiddenIds=new Set(saved.identities.filter(i=>i.role==='assistant').map(i=>i.id));
+ saved.identities=saved.identities.filter(i=>i.role!=='assistant');
+ saved.sessions=saved.sessions.filter(s=>!hiddenIds.has(s.identityId));
+ delete saved.restoredLocalAssistantIdentitiesV1;
+ storage.setItem('',JSON.stringify(saved));
+ const restored=make({storage}).getSnapshot();
+ const locals=restored.identities.filter(i=>i.role==='assistant');
+ assert.equal(locals.length,2);
+ locals.forEach(identity=>assert.ok(restored.sessions.some(session=>session.identityId===identity.id)));
+ const created=make({storage}).createThread(locals[0].id);
+ assert.ok(make({storage}).getSnapshot().sessions.some(session=>session.id===created));
 });
 
 test('independent persona persists and is unaffected by local updates',async()=>{
