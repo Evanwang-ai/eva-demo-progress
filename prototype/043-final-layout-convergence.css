@@ -4,8 +4,8 @@
     --eva-conversation-rail-current: var(--eva-conversation-rail-width);
     --eva-conversation-rail-min: 220px;
     --eva-conversation-rail-max: 480px;
-    --eva-conversation-rail-bg: #f6f7f8;
-    --eva-conversation-rail-border: #dfe3e8;
+    --eva-conversation-rail-bg: var(--eva-surface-glass);
+    --eva-conversation-rail-border: var(--eva-border-subtle);
   }
 
   body.eva-message-hierarchy-ready .eva-msg .ch-list,
@@ -17,7 +17,9 @@
     min-width: var(--eva-conversation-rail-current);
     max-width: var(--eva-conversation-rail-current);
     flex-basis: var(--eva-conversation-rail-current);
-    border-right: 1px solid var(--eva-conversation-rail-border);
+    border: 1px solid var(--eva-conversation-rail-border);
+    border-radius: var(--eva-radius-panel);
+    backdrop-filter: blur(var(--eva-blur-glass));
     background: var(--eva-conversation-rail-bg);
     box-shadow: none !important;
   }

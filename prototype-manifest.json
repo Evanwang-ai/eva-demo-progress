@@ -341,7 +341,7 @@
       "tag": "style",
       "name": "mode-layer",
       "file": "prototype/012-mode-layer.css",
-      "bytes": 24483,
+      "bytes": 24944,
       "role": "prototype"
     },
     {
@@ -533,7 +533,7 @@
       "tag": "style",
       "name": "final-layout-convergence",
       "file": "prototype/043-final-layout-convergence.css",
-      "bytes": 18152,
+      "bytes": 18274,
       "role": "prototype"
     },
     {
@@ -589,7 +589,7 @@
       "tag": "style",
       "name": "gds-tokens",
       "file": "prototype/047-gds-tokens.css",
-      "bytes": 7924,
+      "bytes": 8103,
       "role": "prototype"
     },
     {

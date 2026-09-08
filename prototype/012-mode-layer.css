@@ -46,8 +46,23 @@
   outline-offset: var(--gds-space-0-5);
 }
 
+.app-shell {
+  border-radius: var(--eva-radius-window);
+  overflow: hidden;
+  background: var(--eva-rail-backdrop);
+}
 .layout-sider {
   box-sizing: border-box;
+  --bg-2: var(--eva-surface-glass);
+  background: var(--eva-surface-glass);
+  backdrop-filter: blur(var(--eva-blur-glass));
+  border: 1px solid var(--eva-border-subtle);
+  border-radius: var(--eva-radius-panel);
+}
+.eva-nav-entry svg.lucide {
+  width: var(--eva-icon-nav);
+  height: var(--eva-icon-nav);
+  stroke-width: var(--eva-icon-stroke);
 }
 
 .eva-space-picker {
