@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   root.__evaPatch('general', function (source) {
+    // A queued textarea resize may run after a configuration pane unmounts.
+    source = root.__evaCut(source, 'getSizingData=rt=>{const ct=window.getComputedStyle(rt);', 'getSizingData=rt=>{if(!rt||!rt.isConnected)return null;const ct=window.getComputedStyle(rt);', 'ignore detached textarea resize');
         var evaRelease = root.__EVA_RELEASE;
         if (!evaRelease || !/^\d{2}-\d{2} v\d+$/.test(evaRelease.version || '') || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(evaRelease.updatedAt || '')) {
           throw new Error('release.json 缺失或格式错误');
