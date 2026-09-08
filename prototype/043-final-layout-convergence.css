@@ -294,20 +294,6 @@
     border-radius: 10px !important;
   }
 
-  .eva-contacts--redesigned .eva-contacts__columns {
-    min-height: 38px;
-    margin: 0 0 4px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 8px;
-    background: #f6f7f8;
-  }
-  .eva-contacts--redesigned .eva-contacts__avatar {
-    opacity: 1;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px #e5e6eb;
-  }
-
   .eva-auto-segmented,
   .eva-auto-tabs.eva-auto-segmented {
     position: relative;
