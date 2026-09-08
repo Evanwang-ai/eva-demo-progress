@@ -108,7 +108,7 @@
   color: var(--eva-text-primary);
   white-space: nowrap;
   cursor: pointer;
-  font: inherit;
+  font: var(--eva-fw-regular) 14px/20px var(--eva-font-sans);
 }
 .eva-chip:hover { background: var(--eva-surface-subtle); }
 .eva-chip:focus-visible { outline: 2px solid var(--eva-border-focus); outline-offset: 2px; }
