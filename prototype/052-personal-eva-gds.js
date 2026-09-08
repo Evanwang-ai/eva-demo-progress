@@ -47,6 +47,7 @@
   var activeSkill = null;
   var pickerQuery = '';
   var pickerIndex = 0;
+  var conversationPickerOpen = false;
   var generatingTimer = 0;
   var submitted = null;
   var activeDocument = 'presentation';
@@ -91,6 +92,35 @@
 
   function isNewConversationState() {
     return state === 'home' || state === 'input' || state === 'skill-picker' || state === 'operation';
+  }
+
+  function skillPickerOpen() {
+    return state === 'skill-picker' || conversationPickerOpen;
+  }
+
+  // The personal page owns the picker. Within a conversation it only updates
+  // the composer, leaving the result DOM, selection and editor undo stack intact.
+  function updateConversationComposer() {
+    var composer = root.querySelector('[data-eva-personal-composer]');
+    if (composer) composer.outerHTML = composerPanelHTML(state === 'completed' ? 'eva-composer-narrow' : '');
+    var input = root.querySelector('.eva-composer-prompt');
+    if (input) { input.focus({preventScroll:true}); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+
+  function openSkillPicker() {
+    pickerQuery = ''; pickerIndex = 0;
+    if (state === 'completed' || state === 'history') {
+      conversationPickerOpen = true;
+      updateConversationComposer();
+    } else setState('skill-picker');
+  }
+
+  function closeSkillPicker() {
+    pickerQuery = '';
+    if (conversationPickerOpen) {
+      conversationPickerOpen = false;
+      updateConversationComposer();
+    } else setState(activeSkill && activeSkill.operation ? 'operation' : draft || activeSkill ? 'input' : 'home');
   }
 
   function assistantRailHTML() {
@@ -145,7 +175,7 @@
       return '<button class="eva-send" type="button" data-state="running" data-eva-personal-stop aria-label="停止生成">'
         + '<span class="eva-personal-tool__icon">' + icon('square', 12, 'eva-i') + '</span></button>';
     }
-    var ready = Boolean(draft.trim());
+    var ready = !skillPickerOpen() && Boolean(draft.trim());
     return '<button class="eva-send" type="button" data-state="' + (ready ? 'enabled' : 'disabled') + '"'
       + (ready ? ' data-eva-personal-send' : ' disabled')
       + ' aria-label="' + (ready ? '发送' : '发送（输入后可用）') + '">'
@@ -163,12 +193,13 @@
   }
 
   function composerPanelHTML(extraClass) {
-    var value = state === 'skill-picker' ? pickerQuery : draft;
-    var mention = activeSkill && state !== 'skill-picker'
+    var value = skillPickerOpen() ? pickerQuery : draft;
+    var mention = activeSkill && !skillPickerOpen()
       ? '<span class="eva-mention eva-t-body-medium">' + icon(activeSkill.icon, 16, 'eva-i') + escapeHTML(activeSkill.name) + '</span>' : '';
     return '<div class="eva-composer' + (extraClass ? ' ' + extraClass : '') + '" data-eva-personal-composer>'
-      + '<div class="eva-composer-input-area">' + (state === 'skill-picker' ? '<span aria-hidden="true">@</span>' : '') + mention
-      + '<textarea class="eva-composer-prompt" aria-label="向 Eva 同学提问"' + (state === 'skill-picker' ? ' role="combobox" aria-expanded="true" aria-controls="eva-skill-list" aria-activedescendant="eva-skill-option-' + pickerIndex + '"' : '') + ' placeholder="' + (state === 'skill-picker' ? '输入技能名称' : '要我帮你做些什么？ @ 调用技能与指令') + '"'
+      + (conversationPickerOpen ? pickerHTML() : '')
+      + '<div class="eva-composer-input-area">' + (skillPickerOpen() ? '<span aria-hidden="true">@</span>' : '') + mention
+      + '<textarea class="eva-composer-prompt" aria-label="向 Eva 同学提问"' + (skillPickerOpen() ? ' role="combobox" aria-expanded="true" aria-controls="eva-skill-list" aria-activedescendant="eva-skill-option-' + pickerIndex + '"' : '') + ' placeholder="' + (skillPickerOpen() ? '输入技能名称' : '要我帮你做些什么？ @ 调用技能与指令') + '"'
       + (state === 'generating' ? ' disabled' : '') + '>' + escapeHTML(value) + '</textarea></div>'
       + actionsHTML() + '</div>';
   }
@@ -405,7 +436,7 @@
     if (isNewConversationState()) {
       content = '<div class="eva-personal-workspace__scroll"><div class="eva-personal-workspace__column">'
         + heroHTML() + railHTML() + '<div class="eva-personal-workspace__composer">'
-        + (state === 'skill-picker' ? pickerHTML() : '')
+        + (skillPickerOpen() ? pickerHTML() : '')
         + '<div class="eva-composer-wrap">' + composerPanelHTML()
         + '<div class="eva-personal-quickskills"><button type="button" data-eva-open-skills>' + icon('sparkles', 16, 'eva-i') + '调用技能' + icon('chevron-down', 12, 'eva-i-chevron')
         + '</button><span data-eva-selected-assistant="' + escapeHTML(selectedAssistant().id) + '">' + icon('brain', 16, 'eva-i') + escapeHTML(selectedAssistant().name) + '</span></div></div></div></div></div>';
@@ -476,6 +507,7 @@
       clearTimeout(generatingTimer);
       generatingTimer = 0;
     }
+    conversationPickerOpen = false;
     state = next;
     render();
     return state;
@@ -560,7 +592,7 @@
       activeSkill = SKILLS.filter(function (item) { return item.id === skillRow.dataset.evaSkill; })[0] || null;
       pickerQuery = '';
       draft = !draft.trim() && activeSkill && activeSkill.id === 'ppt' ? TASK_TITLE : draft;
-      setState(activeSkill && activeSkill.operation ? 'operation' : 'input');
+      closeSkillPicker();
       var input = root.querySelector('.eva-composer-prompt');
       if (input) { input.focus(); input.setSelectionRange(input.value.length,input.value.length); }
       return;
@@ -665,7 +697,7 @@
   // draft never replaces the focused input; only the picker list is refreshed.
   document.addEventListener('input', function (event) {
     if (!root || !root.contains(event.target) || !event.target.matches('.eva-composer-prompt')) return;
-    if (state === 'skill-picker') {
+    if (skillPickerOpen()) {
       pickerQuery = event.target.value;
       pickerIndex = 0;
       var host = root.querySelector('.eva-personal-workspace__pickerhost');
@@ -684,7 +716,7 @@
   });
   document.addEventListener('keydown', function (event) {
     if (!root || !root.contains(event.target) || !event.target.matches('.eva-composer-prompt') || event.isComposing || event.keyCode === 229) return;
-    if (state === 'skill-picker') {
+    if (skillPickerOpen()) {
       var rows = Array.from(root.querySelectorAll('[data-eva-skill]'));
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
@@ -696,12 +728,12 @@
         event.preventDefault();
         if (rows[pickerIndex]) rows[pickerIndex].click();
       } else if (event.key === 'Escape') {
-        event.preventDefault(); pickerQuery = ''; setState(draft || activeSkill ? 'input' : 'home');
+        event.preventDefault(); closeSkillPicker();
       }
       return;
     }
     if (event.key === '@') {
-      event.preventDefault(); pickerQuery = ''; pickerIndex = 0; setState('skill-picker');
+      event.preventDefault(); openSkillPicker();
     } else if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault(); startGenerating();
     }
@@ -709,7 +741,7 @@
   document.addEventListener('click', function(event) {
     if (!root || !root.contains(event.target)) return;
     if (event.target.closest('[data-eva-open-skills]')) {
-      pickerQuery = ''; pickerIndex = 0; setState('skill-picker');
+      openSkillPicker();
       root.querySelector('.eva-composer-prompt').focus();
     }
     if (event.target.closest('.eva-rail-next')) {
@@ -720,6 +752,7 @@
   /* 路由是会话选中态的唯一权威源。/guid 是新对话首页，/conversation/:id
      从数据仓恢复所选助理与会话；组件重挂载时同样调用这个函数。 */
   function syncRouteState() {
+    conversationPickerOpen = false;
     var hash = String(location.hash || '');
     var match = hash.match(/^#\/conversation\/([^?]+)/);
     var detail = match && conversationForId(decodeURIComponent(match[1]));
@@ -759,6 +792,7 @@
     syncRouteState();
     render();
     return function () {
+      conversationPickerOpen = false;
       if (generatingTimer) { clearTimeout(generatingTimer); generatingTimer = 0; }
       if (root.parentElement === host) root.remove();
     };

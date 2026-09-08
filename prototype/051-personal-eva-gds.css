@@ -388,3 +388,14 @@
 .eva-personal-workspace :is(.eva-tool-btn,.eva-model,.eva-iconbtn,.eva-round):disabled { color:var(--eva-text-muted); cursor:not-allowed; }
 .eva-personal-workspace .eva-tool-btn[aria-pressed="true"] { background:var(--eva-surface-subtle); color:var(--eva-action-primary); border-radius:var(--eva-radius-control); }
 .eva-personal-workspace .eva-canvas[contenteditable="true"] { outline:2px solid var(--eva-border-focus); outline-offset:2px; }
+
+/* Conversation skill selection stays anchored to its existing composer. */
+.eva-personal-workspace [data-eva-personal-composer] { position: relative; overflow: visible; }
+.eva-personal-workspace [data-eva-personal-composer] > .eva-personal-workspace__pickerhost {
+  display: block;
+  right: 0;
+}
+.eva-personal-workspace [data-eva-personal-composer] > .eva-personal-workspace__pickerhost .eva-picker {
+  width: 100%;
+  max-width: 100%;
+}
