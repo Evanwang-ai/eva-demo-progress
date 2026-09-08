@@ -429,7 +429,7 @@
       "tag": "style",
       "name": "demo-0902-v2-pages",
       "file": "prototype/024-demo-0902-v2-pages.css",
-      "bytes": 9856,
+      "bytes": 11861,
       "role": "prototype"
     },
     {
@@ -437,7 +437,7 @@
       "tag": "script",
       "name": "demo-0902-v2-pages",
       "file": "prototype/025-demo-0902-v2-pages.js",
-      "bytes": 16712,
+      "bytes": 16885,
       "role": "prototype"
     },
     {
