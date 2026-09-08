@@ -269,7 +269,7 @@
       "tag": "link",
       "name": "membership-style",
       "file": "prototype/009-2-members.css",
-      "bytes": 9788,
+      "bytes": 11978,
       "role": "prototype"
     },
     {
@@ -517,7 +517,7 @@
       "tag": "style",
       "name": "project-directory-v3",
       "file": "prototype/036-project-directory-v3.css",
-      "bytes": 17789,
+      "bytes": 18136,
       "role": "prototype"
     },
     {
