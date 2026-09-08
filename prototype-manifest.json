@@ -445,7 +445,7 @@
       "tag": "style",
       "name": "connection-center-v2",
       "file": "prototype/026-connection-center-v2.css",
-      "bytes": 4845,
+      "bytes": 6623,
       "role": "prototype"
     },
     {
@@ -453,7 +453,7 @@
       "tag": "style",
       "name": "connection-center-functional-v2",
       "file": "prototype/028-connection-center-functional-v2.css",
-      "bytes": 5969,
+      "bytes": 7819,
       "role": "prototype"
     },
     {
@@ -461,7 +461,7 @@
       "tag": "script",
       "name": "connection-center-v2-functional",
       "file": "prototype/029-connection-center-v2-functional.js",
-      "bytes": 21988,
+      "bytes": 24427,
       "role": "prototype"
     },
     {
