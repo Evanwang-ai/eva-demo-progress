@@ -82,7 +82,7 @@ function configPane(){
   }
 }
 function market(){
-  const staff=store.agents().filter(a=>a.kind==='staff'),q=query.trim().toLowerCase();
+  const staff=store.agents().filter(a=>a.kind==='staff').map(a=>({...a,domain:a.domain?.trim()||(a.scope==='org'?'全公司':'未设置')})),q=query.trim().toLowerCase();
   const base=staff.filter(a=>!q||[a.name,a.one,a.tagline,a.domain,a.no].some(v=>String(v||'').toLowerCase().includes(q))),list=base.filter(a=>!domain||a.domain===domain);
   const domains=[...new Set(base.map(a=>a.domain).filter(Boolean))].sort((a,b)=>base.filter(x=>x.domain===b).length-base.filter(x=>x.domain===a).length);
   const source={builtin:'内置',domain:'台账',staffpub:'员工发布',mine:'我建的'};
