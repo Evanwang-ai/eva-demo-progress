@@ -29,9 +29,17 @@ requireText('avatarUrl:', 'My AI identity groups do not provide an avatar');
 requireText('wk-category-header__identity-avatar', 'the shared category header cannot render an AI identity avatar');
 requireText("className:'eva-ai-team__session'", 'My AI is missing its conversation selection rows');
 requireText("roleGroup('assistant','个人助理',teamIdentities.filter(i=>i.role==='assistant'))", 'My AI does not expose its personal assistant group');
-requireText("className:'eva-ai-team__fixed-group-tree'", 'My AI does not expose its fixed team group');
 requireText('data-eva-new-folder-chat', 'Personal Eva is missing folder-scoped new conversation actions');
 forbidText('data-eva-new-assistant-chat', 'Personal Eva still organizes chats by multiple assistants');
+requireText('const teamGroups=groupStore.groups()', 'My AI does not derive its AI team list from the canonical group store');
+requireText('teamGroups.map(teamGroupItem)', 'My AI does not render every AI team from the canonical group store');
+requireText("groupStore.createGroup(record)", 'My AI does not create AI teams through the canonical group store');
+requireText("sectionTitle('teams','AI 团队'", 'My AI does not separate AI teams in its conversation rail');
+requireText("sectionTitle('assistants','AI 助理'", 'My AI does not separate AI assistants in its conversation rail');
+requireText('setSectionCollapsed', 'My AI top-level team and assistant sections cannot collapse independently');
+requireText("'新建 AI 团队'", 'My AI is missing its create-team action');
+requireText("'新建个人助理'", 'My AI is missing its create-assistant action');
+requireText("className:'eva-ai-team__identity-action eva-ai-team__new-session'", 'My AI is missing its identity new-session action');
 requireText('eva-my-ai-identity-toggle', 'My AI identity expand/collapse control is missing from the right side');
 requireText('function EvaAITeamPage()', 'My AI has no React role controller');
 requireText('!ct?.conversationOnly&&React.createElement', 'My AI mounts the legacy sidebar alongside its role sidebar');
@@ -45,6 +53,9 @@ forbidText('const openDetails =', 'My AI still exposes the removed identity conf
 forbidText("presentation:'ai-team-workspace'", 'My AI still opens the removed identity configuration workspace');
 forbidText("Dropdown.Item,{onClick:()=>newConversation(i.id)},'新建会话'", 'the identity menu duplicates the dedicated new-session plus action');
 forbidText("Dropdown.Item,{onClick:()=>openDetails(i.id)},'查看配置'", 'identity configuration still uses the obsolete overflow menu');
+requireText("if(i.role!=='assistant')return null", 'My AI must expose configuration editing only for personal assistants');
+requireText("content:'编辑配置'", 'personal assistants are missing the edit configuration entry');
+requireText("role:'assistant',id:i.sourceAssistantId,returnFocus:event.currentTarget", 'personal assistant editing does not map the IM identity to its shared assistant record or preserve its focus return target');
 requireText('store.subscribe', 'My AI does not observe canonical identity data');
 
 requireText('Sa.identityAppearance?React.createElement(EvaAIIdentityAvatar', 'the shared conversation header loses source and ownership');

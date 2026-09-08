@@ -75,15 +75,34 @@ test('个人 Eva 助理与对话只渲染在路由页中间栏', () => {
   assert.doesNotMatch(imPatch, /const LinkIcon=/);
   assert.doesNotMatch(imPatch, /const openDetails =/);
   assert.doesNotMatch(imPatch, /presentation:'ai-team-workspace'/);
+  assert.match(imPatch, /function assistantConfigAction\(i\)\{\s*if\(i\.role!=='assistant'\)return null/);
+  assert.match(imPatch, /content:'编辑配置'.+role:'assistant',id:i\.sourceAssistantId,returnFocus:event\.currentTarget/s);
+  assert.match(imPatch, /const open=options=>setRequest\(options\?\{\.\.\.options,key:Date\.now\(\)\}:null\)/);
+  assert.match(imPatch, /className:'eva-ai-team__identity-action eva-ai-team__edit-config'/);
+  assert.match(imPatch, /target\.isConnected&&target\.focus\(\)/);
   assert.match(imPatch, /window\.__evaOpenAssistantEditor\?\.\(null\)/);
   assert.match(imPatch, /if\(identity\?\.id!==i\.id\)choose\(i\.id,sessions\[0\]\?\.id\|\|null\)/);
   assert.match(imPatch, /collapsedGroups/);
   assert.match(imPatch, /roleGroup\('assistant','个人助理'/);
   assert.match(imPatch, /roleGroup\('persona','云端分身',personas\)/);
   assert.match(imPatch, /roleGroup\('digital','数字员工',digitalEmployees\)/);
-  assert.match(imPatch, /ConvCompactItem,\{name:'我的 AI 团队',avatarUrl:window\.EvaAvatar\.uri\(\{kind:'group',id:groupStore\.id\}\)/);
-  assert.doesNotMatch(imPatch, /eva-ai-team__fixed-group-tree'\},h\('button'.+ChevronRight/s);
+  assert.match(imPatch, /className:'eva-ai-team__sidebar-header'.+h\('h1',null,'我的 AI'\)/s);
+  assert.match(imPatch, /'新建 AI 团队'.+'新建个人助理'/s);
+  assert.match(imPatch, /sectionTitle\('teams','AI 团队'.+sectionTitle\('assistants','AI 助理'/s);
+  assert.match(imPatch, /sectionTitle\('teams','AI 团队'.+Users\)/s);
+  assert.match(imPatch, /sectionTitle\('assistants','AI 助理'.+Sparkles\)/s);
+  assert.match(imPatch, /const \[sectionCollapsed,setSectionCollapsed\]=reactExports\.useState\(\{teams:false,assistants:false\}\)/);
+  assert.match(imPatch, /'aria-expanded':!collapsed,'aria-controls':contentId/);
+  assert.match(imPatch, /type:'file',hidden:true,accept:'image\/png,image\/jpeg,image\/webp'/);
+  assert.match(imPatch, /const reader=new FileReader\(\)/);
+  assert.match(imPatch, /avatar\?'更换团队头像':'上传团队头像'/);
+  assert.doesNotMatch(imPatch, /粘贴头像图片地址/);
+  assert.match(imPatch, /className:'eva-ai-team-editor__selected-avatar'.+EvaAIIdentity\.avatar\(item\.appearance,28,h\).+className:'eva-ai-team-editor__selected-name'/s);
+  assert.doesNotMatch(read('prototype/046-ai-team.css'), /\.eva-ai-team-editor__selected-item\s*>\s*span/);
+  assert.match(imPatch, /teamGroups\.map\(teamGroupItem\)/);
+  assert.match(imPatch, /className:'eva-ai-team__team-default'\},'默认'/);
   assert.match(imPatch, /className:'eva-ai-team__group-count'/);
+  assert.doesNotMatch(imPatch, /Math\.max\(0,channel\.members-1\)/);
   assert.match(imPatch, /EvaAIIdentityAvatar.+eva-ai-team__identity-name.+AiBadge.+eva-ai-team__chevron/s);
   assert.match(imPatch, /EvaAIIdentityAvatar,\{appearance:evaIdentityAppearance\(i\),size:22\}/);
   assert.match(imPatch, /EvaAIIdentity\.avatar\(digitalStore\.appearance\(item\),22,h\)/);
@@ -205,13 +224,13 @@ test('团队消息和我的 AI 的第二栏使用同一套 GDS 文字层级', ()
   assert.match(aiTeamCss, /--eva-rail-level-indent:\s*12px/);
   assert.match(aiTeamCss, /--eva-rail-identity-content-inset:\s*13px/);
   assert.match(aiTeamCss, /eva-ai-team__identity-button\s*\{[^}]*padding:\s*0 0 0 var\(--eva-rail-identity-content-inset\)/s);
-  assert.match(aiTeamCss, /eva-ai-team__fixed-group-tree \.wk-conv-compact-item--thread\s*\{[^}]*padding-left:\s*calc\(var\(--eva-rail-identity-content-inset\) \+ var\(--eva-rail-level-indent\)\)/s);
+  assert.match(aiTeamCss, /eva-ai-team__team-threads \.wk-conv-compact-item--thread\s*\{[^}]*padding-left:\s*calc\(var\(--eva-rail-identity-content-inset\) \+ var\(--eva-rail-level-indent\)\)/s);
   assert.match(aiTeamCss, /--eva-rail-identity-avatar-size:\s*22px/);
   assert.match(aiTeamCss, /--eva-rail-session-indent:\s*calc\(var\(--eva-rail-identity-avatar-size\) \+ var\(--gds-space-2\) \+ var\(--eva-rail-level-indent\)\)/);
-  assert.match(aiTeamCss, /--eva-rail-secondary:\s*var\(--wk-icon-default, rgba\(28, 28, 35, \.6\)\)/);
-  assert.match(aiTeamCss, /--eva-rail-hover:\s*var\(--wk-bg-item-hover, rgba\(46, 50, 56, \.09\)\)/);
-  assert.match(aiTeamCss, /--eva-rail-selected:\s*#f0f1f2/);
-  assert.match(aiTeamCss, /--eva-rail-group-hover:\s*var\(--wk-bg-item-hover, rgba\(46, 50, 56, \.09\)\)/);
+  assert.match(aiTeamCss, /--eva-rail-secondary:\s*var\(--gds-color-text-secondary\)/);
+  assert.match(aiTeamCss, /--eva-rail-hover:\s*var\(--gds-color-overlay-hover\)/);
+  assert.match(aiTeamCss, /--eva-rail-selected:\s*var\(--gds-color-surface-hover\)/);
+  assert.match(aiTeamCss, /--eva-rail-group-hover:\s*var\(--gds-color-overlay-hover\)/);
   assert.match(aiTeamCss, /--eva-rail-group-radius:\s*7px/);
   assert.match(aiTeamCss, /--eva-rail-primary-row-radius:\s*var\(--wk-r-xs, 3px\)/);
   assert.match(aiTeamCss, /--eva-rail-nested-row-radius:\s*var\(--wk-r-xs, 3px\)/);
@@ -220,8 +239,8 @@ test('团队消息和我的 AI 的第二栏使用同一套 GDS 文字层级', ()
   assert.match(aiTeamCss, /eva-ai-team__chevron\s*\{[^}]*flex:\s*0 0 12px/s);
   assert.match(aiTeamCss, /eva-ai-team__chevron\.is-expanded\s*\{\s*transform:\s*rotate\(90deg\)/);
   assert.match(aiTeamCss, /eva-ai-team__role-group \+ \.eva-ai-team__role-group\s*\{[^}]*margin-top:\s*6px[^}]*\}/s);
-  assert.match(aiTeamCss, /eva-ai-team__sidebar-header\s*\{[^}]*padding:\s*var\(--gds-space-3\)/s);
-  assert.match(aiTeamCss, /eva-ai-team__roles\s*\{[^}]*padding:\s*var\(--gds-space-3\) var\(--gds-space-2-5\) var\(--gds-space-3\)/s);
+  assert.match(aiTeamCss, /eva-ai-team__sidebar-header\s*\{[^}]*padding:\s*var\(--gds-space-2\) var\(--gds-space-3\)/s);
+  assert.match(aiTeamCss, /eva-ai-team__roles\s*\{[^}]*padding:\s*var\(--gds-space-2\) var\(--gds-space-2-5\) var\(--gds-space-3\)/s);
   assert.match(aiTeamCss, /eva-ai-team__sidebar-header \.semi-button\s*\{[^}]*height:\s*34px/s);
   assert.match(messageSwitcherCss, /wk-sidebar-tabbar\[data-eva-project-recent-switcher="true"\]\s*\{[^}]*padding:\s*var\(--gds-space-3\)/s);
   assert.match(messageSwitcherCss, /wk-sidebar-tabbar__container\s*\{[^}]*height:\s*34px[^}]*padding:\s*0/s);
@@ -229,6 +248,16 @@ test('团队消息和我的 AI 的第二栏使用同一套 GDS 文字层级', ()
   assert.match(messageSwitcherCss, /eva-msg \.ch-list__top\s*\{[^}]*display:\s*none/s);
   assert.match(imPatch, /EvaAIIdentityAvatar,\{appearance:evaIdentityAppearance\(i\),size:22\}/);
   assert.match(imPatch, /EvaAIIdentity\.avatar\(digitalStore\.appearance\(item\),22,h\)/);
+});
+
+test('我的 AI 顶层分区标题与角色分组使用不同视觉层级', () => {
+  const aiTeamCss = read('prototype/046-ai-team.css');
+  assert.match(aiTeamCss, /\.eva-ai-team__section-title\s*\{[^}]*min-height:\s*40px[^}]*background:\s*transparent/s);
+  assert.doesNotMatch(aiTeamCss.match(/\.eva-ai-team__section-title\s*\{[^}]*\}/s)?.[0]||'', /box-shadow|border-radius/);
+  assert.match(aiTeamCss, /\.eva-ai-team__section-icon\s*\{[^}]*width:\s*20px[^}]*color:\s*var\(--gds-color-text-secondary\)/s);
+  assert.match(aiTeamCss, /\.eva-ai-team__section-count\s*\{[^}]*color:\s*var\(--eva-rail-time\)[^}]*text-align:\s*right/s);
+  assert.match(aiTeamCss, /\.eva-ai-team__group-toggle\s*\{[^}]*min-height:\s*32px[^}]*background:\s*transparent/s);
+  assert.doesNotMatch(aiTeamCss, /\.eva-ai-team__team-heading:has\([^)]*\)[^{]*\.eva-ai-team__group-count/);
 });
 
 test('个人文件夹与对话使用统一 Hover、选中及公共 Lucide 图标', () => {
@@ -249,6 +278,20 @@ test('个人仅创建文件夹与对话，移除助理创建和编辑入口', ()
   assert.match(workspace, /window\.EvaPersonal\.createFolder/);
   assert.match(workspace, /window\.EvaPersonal\.moveConversation/);
   assert.match(workspace, /window\.EvaPersonal\.renameConversation/);
+});
+
+test('我的 AI 位于个人导航并复用个人助理创建流程', () => {
+  const sider = read('prototype/009-7-patch-sider.js');
+  const imPatch = read('prototype/009-5-patch-im.js');
+  const creator = read('prototype/047-digital-employees.js');
+
+  assert.match(sider, /EVA_PERSONAL_NAV=Object\.freeze\(\["new-chat","my-ai","workboard","automation","connection-center"\]\)/);
+  assert.match(sider, /EVA_TEAM_NAV=Object\.freeze\(\["messages","projects","contacts","drive","sites"\]\)/);
+  assert.match(sider, /rt==="\/messages"&&ut\.get\("evaIM"\)==="my-ai"\)return"personal"/);
+  assert.match(sider, /label:"我的 AI"/);
+  assert.match(imPatch, /evaReturn=%2Fmessages%3FevaIM%3Dmy-ai/);
+  assert.match(sider, /returnTo=evaCreatorParams\.get\("evaReturn"\)/);
+  assert.match(creator, /returnTo\?navigate\(returnTo\):navigatePersonal/);
 });
 
 test('一级页面只挂入路由宿主，不再追加到 document.body', () => {
