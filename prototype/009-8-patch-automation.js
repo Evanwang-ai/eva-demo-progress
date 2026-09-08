@@ -21,7 +21,7 @@ const EVA_PERSONAL_AUTOMATION_DEMO=[
 function EvaAutomationSettingsModal({item:rt,visible:ct,onClose:ut,onSave:pt}){
   const[mt,gt]=reactExports.useState(""),[St,Ct]=reactExports.useState(""),[xt,Pt]=reactExports.useState("");
   reactExports.useEffect(()=>{gt(rt?.name||"");Ct(rt?.instruction||rt?.description||"");Pt(rt?.schedule||"")},[rt]);
-  return React.createElement(Modal,{title:"定时任务设置",visible:ct,onCancel:ut,closeOnEsc:true,maskClosable:false,footer:React.createElement(React.Fragment,null,React.createElement(ButtonComponent$1,{onClick:ut},"取消"),React.createElement(ButtonComponent$1,{type:"primary",disabled:!mt.trim(),onClick:()=>{pt&&pt({...rt,name:mt.trim(),instruction:St.trim(),description:St.trim(),schedule:xt.trim()});ut&&ut()}},"保存"))},rt&&React.createElement("div",{className:"eva-auto-settings"},
+  return React.createElement(Modal,{width:640,title:"定时任务设置",visible:ct,onCancel:ut,closeOnEsc:true,maskClosable:false,footer:React.createElement(React.Fragment,null,React.createElement(ButtonComponent$1,{onClick:ut},"取消"),React.createElement(ButtonComponent$1,{type:"primary",disabled:!mt.trim(),onClick:()=>{pt&&pt({...rt,name:mt.trim(),instruction:St.trim(),description:St.trim(),schedule:xt.trim()});ut&&ut()}},"保存"))},rt&&React.createElement("div",{className:"eva-auto-settings"},
     React.createElement("label",null,React.createElement("span",null,"名称"),React.createElement(ForwardInput,{value:mt,onChange:gt,placeholder:"例如 每日晨报"})),
     React.createElement("label",null,React.createElement("span",null,"执行方"),React.createElement("div",{className:"eva-auto-settings__static"},rt.executor||"未指定执行方")),
     React.createElement("label",null,React.createElement("span",null,"触发时间"),React.createElement(ForwardInput,{value:xt,onChange:Pt,placeholder:"例如 工作日 09:00"})),
@@ -81,6 +81,7 @@ function EvaSharedAutomationPage({scope:rt,items:ct,loading:ut,onCreate:pt,onOpe
   const Nt=Dt=>Dt.runTargetId?WKApp$1.routeRight.push(React.createElement(IssueDetailPage,{issueId:Dt.runTargetId,onChanged:xt,onClose:()=>WKApp$1.routeRight.pop()})):Toast.warning("暂无可跳转的 Loop 任务");
   return React.createElement(React.Fragment,null,React.createElement(EvaSharedAutomationPage,{scope:"project",items:Pt,loading:pt,onCreate:()=>St(true),onOpenRun:Nt,notice:"每次触发都会在当前项目中创建一个新的 Loop 任务，并保留运行记录。"}),React.createElement(CreateAutomationModal,{visible:gt,onClose:()=>St(false),onSaved:xt}));
 }` + source.slice(projectAutomationEnd);
+    source = root.__evaCut(source, 'className:"w-[min(560px,calc(100vw-32px))] max-w-560px",unmountOnExit:!0', 'className:"eva-auto-create-modal w-[min(560px,calc(100vw-32px))] max-w-560px",unmountOnExit:!0', '自动化创建样式宿主');
     return source;
   });
 })(window);

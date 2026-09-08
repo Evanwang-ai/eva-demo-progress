@@ -317,7 +317,7 @@
       "tag": "script",
       "name": "runtime-patch-automation",
       "file": "prototype/009-8-patch-automation.js",
-      "bytes": 12353,
+      "bytes": 12604,
       "role": "build-input"
     },
     {
@@ -477,7 +477,7 @@
       "tag": "style",
       "name": "shared-automation-v2",
       "file": "prototype/031-shared-automation-v2.css",
-      "bytes": 9119,
+      "bytes": 11985,
       "role": "prototype"
     },
     {
@@ -533,7 +533,7 @@
       "tag": "style",
       "name": "final-layout-convergence",
       "file": "prototype/043-final-layout-convergence.css",
-      "bytes": 17357,
+      "bytes": 16120,
       "role": "prototype"
     },
     {
