@@ -4,10 +4,8 @@ let Component;
 root.EvaDigitalEmployeesUI={render(props,deps){Component||=create(deps);return deps.React.createElement(Component,props);}};
 function create({React:R,Button,Input,TextArea,Select,Checkbox,Switch,Modal,Table,Tag,Toast,ChannelsView,icons,members,navigatePersonal}){
 const h=R.createElement, data=root.__EVA_DIGITAL_EMPLOYEES_DATA,store=root.EvaDigitalEmployeesStore;
-const buckets=[['all','全部','集团在用的数字员工'],['mine','我创建的','我自己建的、或从 Dify 接进来的'],['builtin','平台内置','Eva 官方出品，全员开箱即用'],['pub','数字员工','各业务域建好、发布出来给全公司用的台账'],['staffpub','员工发布的','同事自己在 Dify / 高码平台上捏的，发布出来给大家用']];
 const tabs={basic:'基本信息',persona:'人设与提示词',skills:'技能',conn:'连接与 MCP',mem:'记忆',perm:'权限与可见性',pub:'发布去处',dify:'Dify 连接',domain:'网关接入'};
 const difyModes={'advanced-chat':['Chatflow','POST /chat-messages','对话型工作流，多轮'],agent:['Agent','POST /chat-messages','自主规划 + 工具调用'],chat:['Chatbot','POST /chat-messages','基础对话应用'],'agent-chat':['Legacy Agent','POST /chat-messages','旧版 Agent'],workflow:['Workflow','POST /workflows/run','一次性执行，无会话'],completion:['Text Generator','POST /completion-messages','单轮补全']};
-const bucketHit=(a,b)=>b==='all'||b==='mine'&&(a.market==='mine'||a.by==='u-wangyilin')||b==='builtin'&&a.market==='builtin'||b==='pub'&&a.market==='domain'||b==='staffpub'&&a.market==='staffpub'&&a.by!=='u-wangyilin';
 const btn=(label,onClick,extra={})=>h(Button,{onClick,...extra},label);
 const identity=(a,badge=false,showNo=true)=>h('span',{className:'eva-digital-center__identity'},root.EvaAIIdentity.avatar(store.appearance(a),32,h),h('span',null,h('span',{className:'eva-identity-name-row'},h('strong',{className:'eva-identity-name-text',title:a.name},a.name),badge&&root.EvaAIIdentity.badge(h)),showNo&&a.no&&h('small',null,a.no)));
 function Field({label,content,hint}){
@@ -20,7 +18,7 @@ const defaults=()=>({name:'',one:'',description:'',target:'prod',role:'记录员
 return function DigitalCenter({view='market',navigate,employeeId,initialType}){
 R.useSyncExternalStore(store.subscribe,store.getSnapshot);R.useSyncExternalStore(members.subscribe,members.getSnapshot);
 const ms=members.snapshot(),actor=ms.actorId;
-const [bucket,setBucket]=R.useState('all'),[query,setQuery]=R.useState(''),[domain,setDomain]=R.useState(null),[expanded,setExpanded]=R.useState(null),[type,setType]=R.useState(null),[tab,setTab]=R.useState('basic'),[draft,setDraft]=R.useState(defaults),[picker,setPicker]=R.useState({}),[dialog,setDialog]=R.useState(null),[chosen,setChosen]=R.useState([]),[projectQuery,setProjectQuery]=R.useState(''),[error,setError]=R.useState('');
+const [query,setQuery]=R.useState(''),[domain,setDomain]=R.useState(null),[expanded,setExpanded]=R.useState(null),[type,setType]=R.useState(null),[tab,setTab]=R.useState('basic'),[draft,setDraft]=R.useState(defaults),[picker,setPicker]=R.useState({}),[dialog,setDialog]=R.useState(null),[chosen,setChosen]=R.useState([]),[projectQuery,setProjectQuery]=R.useState(''),[error,setError]=R.useState('');
 const host=R.useRef(null);const popup=()=>host.current;
 R.useEffect(()=>{setDialog(null);setChosen([]);setProjectQuery('');setError('');},[view,actor,employeeId]);
 const update=(key,value)=>{setDraft(d=>({...d,[key]:value}));setError('');};
@@ -52,8 +50,8 @@ function save(){run(()=>{
   }
   const a=store.create(type,draft);
   if(type==='team'){try{members.addEmployee(draft.target,actor,a.id);}catch(e){store.discardCreated(a.id);throw e;}}
-  setType(null);setBucket('mine');setDomain(null);setQuery('');setExpanded(null);
-  if(type==='team'){navigate('/collab');Toast.success('已放进「'+projectName(ms.projects[draft.target])+'」，角色是'+a.role);}else{navigate('/eva-stub/数字员工');Toast.success('已接入，在数字员工市场「我创建的」里');}
+  setType(null);setDomain(null);setQuery('');setExpanded(null);
+  if(type==='team'){navigate('/collab');Toast.success('已放进「'+projectName(ms.projects[draft.target])+'」，角色是'+a.role);}else{navigate('/eva-stub/数字员工');Toast.success('已接入，可在数字员工市场查看');}
 });}
 function resourcePicker(key){
   const pool=key==='skills'?data.skills:data.connections, idOf=a=>key==='skills'?a.name:a.id,p=picker[key]||{},ids=draft[key]||[],q=(p.q||'').toLowerCase();
@@ -84,14 +82,14 @@ function configPane(){
   }
 }
 function market(){
-  const staff=store.agents().filter(a=>a.kind==='staff'),pool=staff.filter(a=>bucketHit(a,bucket)),q=query.trim().toLowerCase();
-  const base=pool.filter(a=>!q||[a.name,a.one,a.tagline,a.domain,a.no].some(v=>String(v||'').toLowerCase().includes(q))),list=base.filter(a=>!domain||a.domain===domain);
+  const staff=store.agents().filter(a=>a.kind==='staff'),q=query.trim().toLowerCase();
+  const base=staff.filter(a=>!q||[a.name,a.one,a.tagline,a.domain,a.no].some(v=>String(v||'').toLowerCase().includes(q))),list=base.filter(a=>!domain||a.domain===domain);
   const domains=[...new Set(base.map(a=>a.domain).filter(Boolean))].sort((a,b)=>base.filter(x=>x.domain===b).length-base.filter(x=>x.domain===a).length);
   const source={builtin:'内置',domain:'台账',staffpub:'员工发布',mine:'我建的'};
   const columns=[{title:'名称',dataIndex:'name',width:220,className:'eva-digital-center__name-cell',render:(_,a)=>identity(a,false,false)},{title:'工号',dataIndex:'no',width:100},{title:'业务域',dataIndex:'domain',width:100},{title:'来源',dataIndex:'market',width:80,render:m=>source[m]||'台账'},{title:'操作',className:'eva-digital-center__action-cell',render:(_,a)=>h('div',{className:'eva-digital-center__actions'},btn(store.hasInTeam(a.id)?'已加入 AI 团队':'加入 AI 团队',e=>{e.stopPropagation();run(()=>{store.addToTeam(a.id);Toast.success('已加入我的 AI 团队');});},{size:'small',disabled:store.hasInTeam(a.id),'aria-label':store.hasInTeam(a.id)?'已加入我的 AI 团队':'加入我的 AI 团队'}),btn('加入项目',e=>{e.stopPropagation();open('project',a);},{size:'small'}),a.no&&btn('接入配置',e=>{e.stopPropagation();open('intake',a);},{size:'small',theme:'borderless'}))}];
-  return h(R.Fragment,null,h('aside',{className:'eva-digital-center__rail'},h('h2',null,'数字员工市场'),buckets.map(([key,label,hint])=>btn(h('span',null,label+' '+staff.filter(a=>bucketHit(a,key)).length,h('small',null,hint)),()=>{setBucket(key);setExpanded(null);},{key,'aria-pressed':bucket===key,theme:bucket===key?'light':'borderless',type:'tertiary'}))),h('main',{className:'eva-digital-center__main'},h('header',{className:'eva-digital-center__head'},h('div',null,h('h1',null,bucket==='all'?'数字员工市场':buckets.find(b=>b[0]===bucket)[1]),h('p',null,staff.length+' 个数字员工，先搜或圈业务域，再按决策 / 管理 / 执行型挑选'))),h(Input,{prefix:h(icons.Search,{size:16}),showClear:true,value:query,onChange:v=>{setQuery(v);setExpanded(null);},placeholder:'搜数字员工：名字、干什么的、业务域、编号'}),h('div',{className:'eva-digital-center__filters'},btn('全部业务域 '+base.length,()=>{setDomain(null);setExpanded(null);},{'aria-pressed':!domain,theme:!domain?'light':'borderless'}),domains.map(d=>btn(d+' '+base.filter(a=>a.domain===d).length,()=>{setDomain(d);setExpanded(null);},{key:d,'aria-pressed':domain===d,theme:domain===d?'light':'borderless'}))),...['big','mid','small','unassigned'].map(t=>{
+  return h(R.Fragment,null,h('main',{className:'eva-digital-center__main'},h('header',{className:'eva-digital-center__head'},h('div',null,h('h1',null,'数字员工市场'),h('p',null,staff.length+' 个数字员工，先搜或圈业务域，再按决策 / 管理 / 执行型挑选'))),h(Input,{prefix:h(icons.Search,{size:16}),showClear:true,value:query,onChange:v=>{setQuery(v);setExpanded(null);},placeholder:'搜数字员工：名字、干什么的、业务域、编号'}),h('div',{className:'eva-digital-center__filters'},btn('全部业务域 '+base.length,()=>{setDomain(null);setExpanded(null);},{'aria-pressed':!domain,theme:!domain?'light':'borderless'}),domains.map(d=>btn(d+' '+base.filter(a=>a.domain===d).length,()=>{setDomain(d);setExpanded(null);},{key:d,'aria-pressed':domain===d,theme:domain===d?'light':'borderless'}))),...['big','mid','small','unassigned'].map(t=>{
     const items=list.filter(a=>t==='unassigned'?!a.tier:a.tier===t);if(!items.length)return null;
-    const meta=data.tiers[t]||{n:'还没分层',d:'台账里没标决策 / 管理 / 执行型的'},openKey=[t,bucket,domain,query].join(':'),isOpen=expanded===openKey;
+    const meta=data.tiers[t]||{n:'还没分层',d:'台账里没标决策 / 管理 / 执行型的'},openKey=[t,domain,query].join(':'),isOpen=expanded===openKey;
     return h('section',{key:t,className:'eva-digital-center__section'},h('header',{className:'eva-digital-center__section-head'},h('div',null,h('h3',null,meta.n+(t==='unassigned'?'':'专家')+' '+items.length),h('p',null,meta.d)),items.length>12&&btn(isOpen?'收起':'全部 '+items.length+' 个',()=>setExpanded(isOpen?null:openKey),{size:'small'})),h('div',{className:'eva-digital-center__table',tabIndex:0,'aria-label':meta.n+'数字员工列表，可左右滚动'},h(Table,{rowKey:'id',pagination:false,columns,dataSource:isOpen?items:items.slice(0,12),onRow:a=>({tabIndex:0,'aria-label':'查看'+a.name+'的详情',onClick:()=>open('detail',a),onKeyDown:e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open('detail',a);}}})})));
   }),!list.length&&h('div',{className:'eva-digital-center__empty'},query?'没搜到「'+query+'」':'这个筛选下还没有')));
 }
