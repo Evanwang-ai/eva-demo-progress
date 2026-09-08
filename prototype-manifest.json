@@ -501,7 +501,7 @@
       "tag": "style",
       "name": "project-task-toolbar-v3",
       "file": "prototype/034-project-task-toolbar-v3.css",
-      "bytes": 3144,
+      "bytes": 6107,
       "role": "prototype"
     },
     {
@@ -566,7 +566,7 @@
       "name": "loop-task-create-style",
       "role": "prototype",
       "order": 70,
-      "bytes": 5287
+      "bytes": 4498
     },
     {
       "order": 71,
