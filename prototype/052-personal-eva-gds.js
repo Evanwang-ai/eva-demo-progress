@@ -51,6 +51,7 @@
   var submitted = null;
   var activeDocument = 'presentation';
   var slideIndex = 0;
+  var slideDrafts = Object.create(null);
   var zoom = 100;
   var feedback = '';
   var editing = false;
@@ -484,6 +485,7 @@
     if (!draft.trim()) return;
     submitted = {text:draft.trim(), skill:activeSkill};
     draft = ''; activeSkill = null; feedback = ''; slideIndex = 0; zoom = 100;
+    slideDrafts = Object.create(null); editing = false;
     activeDocument = isPresentation() ? 'presentation' : 'document';
     setState('generating');
     generatingTimer = setTimeout(function () {
@@ -631,7 +633,7 @@
         item.setAttribute('aria-selected', item === thumb ? 'true' : 'false');
       });
       var canvas = root.querySelector('[data-eva-personal-canvas]');
-      if (canvas) canvas.innerHTML = slideHTML(SLIDES[index], 16);
+      if (canvas) canvas.innerHTML = slideDrafts[index] ?? slideHTML(SLIDES[index], 16);
       var label = root.querySelector('[data-eva-personal-page]');
       if (label) label.textContent = '第 ' + (index + 1) + ' 页';
       return;
@@ -650,6 +652,13 @@
     var current = tabs.indexOf(tab);
     var next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length-1 : (current + (['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 1) + tabs.length) % tabs.length;
     event.preventDefault(); tabs[next].focus(); tabs[next].click();
+  });
+
+  // Keep edits with their slide for this generated result, not with the active DOM node.
+  document.addEventListener('input', function(event) {
+    if (!root || !root.contains(event.target)) return;
+    var canvas = event.target.closest('[data-eva-personal-canvas]');
+    if (canvas && editing) slideDrafts[slideIndex] = canvas.innerHTML;
   });
 
   // Native textarea owns IME composition, paste, selection and undo. Updating
