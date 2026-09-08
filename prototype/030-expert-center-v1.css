@@ -68,3 +68,39 @@
 .collab-frame .loop-agent-row__owner { display:inline-flex; }
 .loop-modal :is(.loop-fields__row,.loop-nsk__field) { display:grid;gap:8px; }
 .loop-modal :is(.loop-fields__label,.loop-nsk__field > label) { margin-bottom:0; }
+
+/* Resource details reuse the same reading, editing and property scales. */
+:is(.loop-adp,.loop-sqd,.loop-sd) { font:400 14px/22px var(--eva-font-sans);color:var(--eva-text-primary); }
+:is(.loop-adp__header,.loop-sqd__header,.loop-sd__topbar) { box-sizing:border-box;min-height:52px;padding:12px 24px;gap:12px; }
+:is(.loop-adp__header,.loop-sqd__header,.loop-sd__topbar) .semi-button { min-height:32px; }
+.loop-adp__main { padding:24px;min-width:0; }
+.loop-adp__aside { box-sizing:border-box;padding:24px;width:296px;flex:0 0 296px; }
+.loop-adp__statcard { padding:24px;border-radius:16px;gap:24px;flex-wrap:wrap; }
+.loop-adp__statnum { font:600 32px/40px var(--eva-font-sans); }
+:is(.loop-adp__ins-name,.loop-adp__panel-title,.loop-adp__section-title,.loop-sqd__name,.loop-sqd__members-title,.loop-skill-profile__name) { font:500 16px/24px var(--eva-font-sans); }
+:is(.loop-adp__ins-desc,.loop-sqd__desc) { font:400 15px/24px var(--eva-font-sans); }
+.loop-adp__aside-sec { margin-top:24px; }
+.loop-adp__props > div { min-height:32px; }
+.loop-adp__config { gap:24px; }
+.loop-adp__subnav { flex:0 0 160px; }
+:is(.loop-adp__subnav-item,.loop-adp__toptab,.loop-sqd__tab) { min-height:32px;font:400 14px/22px var(--eva-font-sans);border-radius:8px; }
+.loop-adp__subnav-item.is-active { color:var(--eva-action-primary);background:color-mix(in srgb,var(--eva-action-primary) 8%,white); }
+:is(.loop-adp__editor,.loop-sqd__editor) { border-radius:16px;overflow:hidden; }
+:is(.loop-adp__ed-preview,.loop-sqd__ed) { box-sizing:border-box;padding:24px;font:400 15px/24px var(--eva-font-sans); }
+:is(.loop-adp,.loop-sd) .loop-md { font-size:15px;line-height:24px;max-width:776px;margin-inline:auto; }
+:is(.loop-adp,.loop-sd) .loop-md :is(h1,h2,h3) { font-size:16px;line-height:24px;font-weight:500; }
+.loop-sqd__body { box-sizing:border-box;width:100%;max-width:824px;margin-inline:auto;padding:24px; }
+.loop-sqd__identity { gap:16px;margin-bottom:24px; }
+.loop-sqd__mem { min-height:64px;padding:12px 0; }
+.loop-sqd__mem-name { font-size:14px;line-height:22px;font-weight:500; }
+.loop-skill-profile { padding:20px 16px; }
+.loop-skill-profile__desc { font-size:12px;line-height:16px; }
+.loop-fv__head { min-height:40px;padding:8px 16px; }
+.loop-fv__preview { padding:24px; }
+.loop-fv__editor { padding:24px;font-size:14px;line-height:22px; }
+:is(.loop-adp,.loop-sqd,.loop-sd) :is(button,textarea):focus-visible { outline:2px solid var(--eva-action-primary);outline-offset:-2px; }
+@media(max-width:1000px) { .loop-adp__aside { width:240px;flex-basis:240px;padding:16px; } .loop-adp__subnav { flex-basis:120px; } }
+:is(.loop-adp__toptab,.loop-sqd__tab) { border-radius:0; }
+:is(.loop-adp__toptab,.loop-sqd__tab).is-active { color:var(--eva-action-primary);border-bottom-color:var(--eva-action-primary);font-weight:500; }
+.loop-adp__skill-row { min-height:56px;padding:12px;gap:12px;border-bottom:1px solid var(--eva-border-subtle); }
+.loop-adp__skill-row button { min-width:32px;min-height:32px; }
