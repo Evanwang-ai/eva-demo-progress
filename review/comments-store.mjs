@@ -1,3 +1,7 @@
+function validId(id) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))) throw new Error('批注 ID 格式错误');
+  return id;
+}
 const TABLE = 'eva_demo_comments';
 const REPLIES_TABLE = 'eva_demo_comment_replies';
 const STATUSES = new Set(['open', 'approved', 'doing', 'done']);
@@ -45,13 +49,22 @@ export function createCommentsStore({ url, key, fetchImpl = fetch }) {
     return payload;
   }
   return {
-    async list(pagePath) {
+    async list(pagePath, ids) {
       const query = new URLSearchParams({
-        select: 'id,seq,page_path,anchor,author_name,body,kind,status,created_at,updated_at,replies:eva_demo_comment_replies(id,author_name,body,created_at)',
+        select: 'id,seq,page_path,anchor,author_name,body,kind,status,created_at,updated_at,claimed_by,claimed_at,replies:eva_demo_comment_replies(id,author_name,body,created_at)',
         order: 'created_at.desc',
       });
       if (pagePath) query.set('page_path', `eq.${pagePath}`);
+      if (ids?.length) query.set('id', `in.(${ids.map(validId).join(',')})`);
       return request(`${endpoint}?${query}`, { method: 'GET' });
+    },
+    async claim(ids, author, release = false) {
+      if (!Array.isArray(ids) || !ids.length || ids.length > 100) throw new Error('每次请选择 1–100 条批注');
+      const name = String(author || '').trim();
+      if (!name || name.length > 40) throw new Error('请填写 1–40 字的认领者姓名');
+      return request(`${url.replace(/\/$/, '')}/rest/v1/rpc/eva_claim_comments`, {
+        method: 'POST', body: JSON.stringify({ comment_ids: [...new Set(ids.map(validId))], actor: name, release_claim: release }),
+      });
     },
     async create(comment) {
       const valid = validateComment(comment);
@@ -70,13 +83,15 @@ export function createCommentsStore({ url, key, fetchImpl = fetch }) {
       });
       return rows[0];
     },
-    async updateStatus(id, status) {
+    async updateStatus(id, status, author) {
       if (!STATUSES.has(status)) throw new Error('不支持的批注状态');
-      const query = new URLSearchParams({ id: `eq.${id}` });
+      const name = String(author || '').trim();
+      if (!name || name === DEFAULT_AUTHOR || name.length > 40) throw new Error('请先填写 1–40 字的操作人姓名，修改状态将同时认领');
+      const query = new URLSearchParams({ id: `eq.${validId(id)}` });
       const rows = await request(`${endpoint}?${query}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=representation' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, claimed_by: name, claimed_at: new Date().toISOString() }),
       });
       if (!rows[0]) throw new Error('批注不存在或没有更新权限');
       return rows[0];

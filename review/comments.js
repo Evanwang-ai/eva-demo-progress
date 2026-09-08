@@ -1,3 +1,5 @@
+import { getReviewAuthor, setReviewAuthor, subscribeReviewAuthor } from './review-identity.mjs';
+import { menuOf } from './developer-domain.mjs';
 import { createCommentsStore } from './comments-store.mjs';
 import { afterBrowserPaint, buildAnchorRecord, buildProjectViewContext, clampFloatingPosition, createPageChangeDetector, createPageRequestGate, hasDragMoved, inferProjectTab, isVisiblePin, normalizeStatus, pageLabel, partitionCommentsByCompletion, pointWithinRect } from './comments-domain.mjs';
 import { COMMENTS_CONFIG } from './comments-config.mjs';
@@ -22,6 +24,7 @@ const STATUSES = {
   doing: '原型修改中',
   done: '原型已改完',
 };
+if (state.pinMode === 'approved') state.pinMode = 'all';
 const savedStatusFilter = localStorage.getItem('eva-review-status-filter');
 state.statusFilter = Object.hasOwn(STATUSES, savedStatusFilter) ? savedStatusFilter : 'all';
 
@@ -155,17 +158,11 @@ function ensureUI() {
     <div class="eva-review-hover" data-review-ui hidden></div>
     <div class="eva-review-picker-shield" data-review-ui hidden aria-label="选择批注位置"></div>
     <button type="button" class="eva-review-launcher" data-review-ui data-review-launcher aria-expanded="false" aria-controls="eva-review-panel">${icon('comment',15)}<span>批注</span></button>
-    <button type="button" class="eva-review-restore" data-review-ui data-review-restore hidden aria-label="显示批注">${icon('eye',15)}</button>
     <aside id="eva-review-panel" class="eva-review-panel" data-review-ui hidden aria-label="原型批注">
-      <header class="eva-review-head" data-review-drag-handle><div><strong>批注</strong><span>所有同事共享</span></div><div class="eva-review-head-actions"><div class="eva-review-updates"><button type="button" data-review-load-updates>检查更新</button><span data-review-update-status role="status" aria-live="polite"></span></div><select class="eva-review-status-filter" data-review-status-filter aria-label="筛选批注状态"><option value="all">全部状态</option>${Object.entries(STATUSES).map(([value, label]) => `<option value="${value}"${state.statusFilter === value ? ' selected' : ''}>${label}</option>`).join('')}</select><button type="button" class="eva-review-icon-button" data-review-hide aria-label="隐藏批注入口">${icon('eyeOff')}</button><button type="button" class="eva-review-icon-button" data-review-close aria-label="收起批注">${icon('close')}</button></div></header>
-      <div class="eva-review-toolbar">
-        <button type="button" class="eva-review-primary" data-review-add>${icon('add')}添加批注</button>
-      </div>
-      <div class="eva-review-visibility" role="radiogroup" aria-label="全局批注显示">
-        <button type="button" data-review-pin-mode="all" aria-pressed="${state.pinMode === 'all'}">全部查看</button>
-        <button type="button" data-review-pin-mode="approved" aria-pressed="${state.pinMode === 'approved'}">仅已确认</button>
-        <button type="button" data-review-pin-mode="off" aria-pressed="${state.pinMode === 'off'}">关闭批注</button>
-      </div>
+      <header class="eva-review-head" data-review-drag-handle><strong>批注</strong><div class="eva-review-head-actions"><a data-review-developer href="/review/developer.html" target="_blank" rel="noopener" title="勾选批注，复制修改提示词给 AI（新页面）">${window.__evaLucide('external-link',{size:13,strokeWidth:1.8})}开发工作台</a><button type="button" class="eva-review-icon-button" data-review-close aria-label="收起批注">${icon('close')}</button></div></header>
+      <div class="eva-review-toolbar"><button type="button" class="eva-review-primary" data-review-add>${icon('add')}添加批注</button><div class="eva-review-updates"><button type="button" data-review-load-updates>检查更新</button><span data-review-update-status role="status" aria-live="polite"></span></div></div>
+      <div class="eva-review-filters"><label>状态<select class="eva-review-status-filter" data-review-status-filter aria-label="筛选批注状态"><option value="all">全部状态</option>${Object.entries(STATUSES).map(([value,label])=>`<option value="${value}"${state.statusFilter===value?' selected':''}>${label}</option>`).join('')}</select></label><label class="eva-review-marker-toggle"><input type="checkbox" role="switch" data-review-markers ${state.pinMode!=='off'?'checked':''}>页面标记</label></div>
+      <label class="eva-review-operator">操作人<input data-review-operator maxlength="40" autocomplete="off" placeholder="填写姓名，改状态即认领" value="${escapeHtml(getReviewAuthor())}"></label>
       <div class="eva-review-list"></div>
     </aside>
     <div class="eva-review-dialog" data-review-ui hidden role="dialog" aria-modal="true" aria-labelledby="eva-review-title">
@@ -179,6 +176,9 @@ function ensureUI() {
       </form>
     </div>`);
   renderIdentity();
+  document.querySelector('[data-review-operator]').oninput=event=>{if(!event.isComposing)setReviewAuthor(event.target.value);};
+  document.querySelector('[data-review-operator]').oncompositionend=event=>setReviewAuthor(event.target.value);
+  subscribeReviewAuthor(author=>{const input=document.querySelector('[data-review-operator]');if(document.activeElement!==input)input.value=author;renderIdentity();});
   document.querySelector('[data-review-launcher]').onclick = () => { if (Date.now() > state.draggedUntil) openPanel(); };
   document.querySelector('[data-review-close]').onclick = closePanel;
   document.querySelector('[data-review-load-updates]').onclick = loadUpdates;
@@ -186,14 +186,12 @@ function ensureUI() {
     state.statusFilter = Object.hasOwn(STATUSES, event.target.value) ? event.target.value : 'all';
     localStorage.setItem('eva-review-status-filter', state.statusFilter);
     document.querySelector('.eva-review-list').scrollTop = 0;
-    renderList();
+    renderList(); schedulePins();
   };
-  document.querySelector('[data-review-hide]').onclick = hideReviewEntry;
-  document.querySelector('[data-review-restore]').onclick = restoreReviewEntry;
   document.querySelector('[data-review-add]').onclick = startPicking;
   document.querySelectorAll('[data-review-cancel]').forEach(button => button.onclick = closeDialog);
-  document.querySelectorAll('[data-review-pin-mode]').forEach(button => button.onclick = () => setPinMode(button.dataset.reviewPinMode));
-  document.querySelector('[data-review-change-author]').onclick = () => { localStorage.removeItem('eva-review-author'); renderIdentity({ focus:true }); };
+  document.querySelector('[data-review-markers]').onchange = event => setPinMode(event.target.checked ? 'all' : 'off');
+  document.querySelector('[data-review-change-author]').onclick = () => { setReviewAuthor(''); renderIdentity({ focus:true }); };
   const pickerShield = document.querySelector('.eva-review-picker-shield');
   pickerShield.onpointermove = event => updatePickerTarget(event.clientX, event.clientY);
   pickerShield.onclick = event => selectPickerTarget(event.clientX, event.clientY);
@@ -248,22 +246,12 @@ function bindFloatingDrag(element, handle, storageKey) {
 }
 
 function syncReviewEntryVisibility() {
-  const hidden = localStorage.getItem('eva-review-entry-hidden') === 'true';
-  document.querySelector('[data-review-restore]').hidden = !hidden;
-  if (hidden) { document.querySelector('[data-review-launcher]').hidden = true; document.querySelector('.eva-review-panel').hidden = true; }
-}
-
-function hideReviewEntry() {
-  localStorage.setItem('eva-review-entry-hidden', 'true'); cancelPicking(); syncReviewEntryVisibility();
-}
-
-function restoreReviewEntry() {
+  // Retire the old hidden-entry preference: closing now only collapses the panel.
   localStorage.removeItem('eva-review-entry-hidden');
-  document.querySelector('[data-review-restore]').hidden = true; document.querySelector('[data-review-launcher]').hidden = false;
 }
 
 function renderIdentity({ focus = false } = {}) {
-  const author = localStorage.getItem('eva-review-author') || '';
+  const author = getReviewAuthor();
   const field = document.querySelector('[data-review-author-field]');
   const saved = document.querySelector('[data-review-author-saved]');
   const input = field?.querySelector('input');
@@ -284,7 +272,7 @@ function syncUpdateNotice() {
   const button = document.querySelector('[data-review-load-updates]');
   if (!button) return;
   const pending = state.pendingRows !== null;
-  button.textContent = pending ? '有更新，点击加载' : '检查更新';
+  button.textContent = pending ? '加载更新' : '检查更新';
   button.classList.toggle('has-updates', pending);
   const status = document.querySelector('[data-review-update-status]');
   const message = pending ? '有新的批注变更' : '';
@@ -335,6 +323,7 @@ async function loadUpdates() {
 
 async function refresh({ quiet = false, background = false } = {}) {
   ensureUI();
+  document.querySelector('[data-review-developer]').href = '/review/developer.html?menu=' + encodeURIComponent(menuOf(currentPage()));
   if (background && state.checking) return;
   const request = requestGate.start();
   state.checking = true;
@@ -377,15 +366,12 @@ function renderList() {
     .filter(item => item.getBoundingClientRect().bottom > listTop)
     .map(item => ({ id: item.dataset.reviewItem, offset: item.getBoundingClientRect().top - listTop }));
   const rows = state.rows
-    .filter(row => state.pinMode === 'all' || (state.pinMode === 'approved' && row.status === 'approved'))
     .filter(row => state.statusFilter === 'all' || row.status === state.statusFilter)
     .sort((a,b) => Number(b.seq || 0) - Number(a.seq || 0));
   if (!rows.length) {
-    list.innerHTML = state.pinMode === 'off'
-      ? '<div class="eva-review-empty"><strong>批注已关闭</strong><span>切换到“全部查看”或“仅已确认”即可恢复。</span></div>'
-      : state.statusFilter !== 'all'
-        ? '<div class="eva-review-empty"><strong>当前范围内没有此状态的批注</strong><span>可切换状态或选择“全部查看”。</span></div>'
-      : '<div class="eva-review-empty"><strong>这里还没有批注</strong><span>点击“添加批注”，再选择页面中的具体位置。</span></div>';
+    list.innerHTML = state.statusFilter !== 'all'
+      ? '<div class="eva-review-empty"><strong>没有此状态的批注</strong><span>切换为“全部状态”查看其他批注。</span></div>'
+      : '<div class="eva-review-empty"><strong>这里还没有批注</strong><span>点击“添加批注”，选择页面中的具体位置。</span></div>';
     return;
   }
   const { pending, completed } = partitionCommentsByCompletion(rows);
@@ -406,7 +392,7 @@ function renderList() {
 
 function commentHtml(row) {
   const kind = KINDS[row.kind] || KINDS.issue;
-  const savedAuthor = localStorage.getItem('eva-review-author') || '';
+  const savedAuthor = getReviewAuthor();
   const replies = [...(row.replies || [])].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
   const options = Object.entries(STATUSES).map(([value,label]) => `<option value="${value}"${row.status === value ? ' selected' : ''}>${label}</option>`).join('');
   const replying = state.replyingId === row.id;
@@ -418,7 +404,7 @@ function commentHtml(row) {
     <div class="eva-review-body">${escapeHtml(row.body)}</div>
     ${replies.length ? `<div class="eva-review-replies">${replies.map(reply => `<div><header><strong>${escapeHtml(reply.author_name)}</strong><time>${escapeHtml(shortTime(reply.created_at))}</time></header><p>${escapeHtml(reply.body)}</p></div>`).join('')}</div>` : ''}
     ${replying ? `<form class="eva-review-reply${savedAuthor ? ' has-author' : ''}" data-review-reply="${escapeHtml(row.id)}" autocomplete="off">${savedAuthor ? '' : `<input name="author" autocomplete="off" value="${escapeHtml(draft.author)}" ${submitting ? 'readonly' : ''} maxlength="40" placeholder="你的名字（选填）" aria-label="回复人姓名">`}<input name="body" autocomplete="off" value="${escapeHtml(draft.body)}" ${submitting ? 'readonly' : ''} maxlength="2000" placeholder="回复这条批注" aria-label="回复内容" required><button type="submit" ${submitting ? 'disabled' : ''} aria-label="发送回复">${icon('send',15)}</button></form>` : ''}
-    <footer><label class="eva-review-status"><span class="eva-review-status-light is-${escapeHtml(row.status)}" aria-hidden="true"></span><select data-review-status="${escapeHtml(row.id)}" aria-label="批注状态">${options}</select></label><div class="eva-review-actions">${row.status === 'done' ? '' : `<button type="button" class="eva-review-icon-button is-complete" data-review-complete="${escapeHtml(row.id)}" aria-label="标记为原型已改完">${icon('check')}</button>`}<button type="button" class="eva-review-icon-button" data-review-reply-toggle="${escapeHtml(row.id)}" aria-expanded="${replying}" aria-label="${replying ? '收起回复' : '回复批注'}">${icon('reply')}</button><button type="button" class="eva-review-icon-button is-danger" data-review-delete="${escapeHtml(row.id)}" aria-label="删除批注">${icon('trash')}</button></div></footer>
+    <div class="eva-review-claimed">认领者：${escapeHtml(row.claimed_by || '-')}</div><footer><label class="eva-review-status"><span class="eva-review-status-light is-${escapeHtml(row.status)}" aria-hidden="true"></span><select data-review-status="${escapeHtml(row.id)}" title="修改状态会将操作人设为认领者" aria-label="批注状态">${options}</select></label><div class="eva-review-actions">${row.status === 'done' ? '' : `<button type="button" class="eva-review-icon-button is-complete" data-review-complete="${escapeHtml(row.id)}" aria-label="标记为原型已改完">${icon('check')}</button>`}<button type="button" class="eva-review-icon-button" data-review-reply-toggle="${escapeHtml(row.id)}" aria-expanded="${replying}" aria-label="${replying ? '收起回复' : '回复批注'}">${icon('reply')}</button><button type="button" class="eva-review-icon-button is-danger" data-review-delete="${escapeHtml(row.id)}" aria-label="删除批注">${icon('trash')}</button></div></footer>
   </article>`;
 }
 
@@ -445,12 +431,12 @@ function bindListEvents() {
   });
   document.querySelectorAll('[data-review-complete]').forEach(button => button.onclick = async () => {
     button.disabled = true;
-    try { upsertLocalComment(await store.updateStatus(button.dataset.reviewComplete, 'done')); toast('已标记为“原型已改完”'); }
+    try { upsertLocalComment(await store.updateStatus(button.dataset.reviewComplete, 'done', getReviewAuthor())); toast('已标记为“原型已改完”'); }
     catch (error) { toast(error.message); button.disabled = false; }
   });
   document.querySelectorAll('[data-review-status]').forEach(select => select.onchange = async () => {
     select.disabled = true;
-    try { upsertLocalComment(await store.updateStatus(select.dataset.reviewStatus, select.value)); toast(`已设为“${STATUSES[select.value]}”`); }
+    try { upsertLocalComment(await store.updateStatus(select.dataset.reviewStatus, select.value, getReviewAuthor())); toast(`已设为“${STATUSES[select.value]}”`); }
     catch (error) { toast(error.message); select.value = state.rows.find(row => row.id === select.dataset.reviewStatus)?.status || 'open'; }
     finally { select.disabled = false; }
   });
@@ -471,10 +457,10 @@ function bindListEvents() {
       state.submittingReplies.add(id);
       form.querySelectorAll('input').forEach(input => input.readOnly = true);
       try {
-        const authorName = localStorage.getItem('eva-review-author') || form.author?.value || '';
+        const authorName = getReviewAuthor() || form.author?.value || '';
         const reply = await store.addReply(id, { author_name: authorName, body: form.body.value });
         state.replyDrafts.delete(id);
-        localStorage.setItem('eva-review-author', reply.author_name);
+        setReviewAuthor(reply.author_name);
         if (state.replyingId === id) state.replyingId = null;
         renderIdentity();
         applyLocalChange(rows => rows.map(row => row.id === id ? { ...row, replies: [...row.replies.filter(item => item.id !== reply.id), reply] } : row));
@@ -536,9 +522,9 @@ async function submitComment(event) {
   const form = event.currentTarget; const error = form.querySelector('.eva-review-error'); error.textContent = '';
   const submit = form.querySelector('[type=submit]'); submit.disabled = true;
   try {
-    const authorName = localStorage.getItem('eva-review-author') || form.author.value;
+    const authorName = getReviewAuthor() || form.author.value;
     const row = await store.create({ page_path:currentPage(), anchor:state.target?.anchor || {}, author_name:authorName, body:form.body.value, kind:form.kind.value, status:'open' });
-    localStorage.setItem('eva-review-author', row.author_name); renderIdentity(); form.body.value = ''; state.activeId = row.id; closeDialog(); upsertLocalComment(row); toast(`批注 #${row.seq || ''} 已同步`);
+    setReviewAuthor(row.author_name); renderIdentity(); form.body.value = ''; state.activeId = row.id; closeDialog(); upsertLocalComment(row); toast(`批注 #${row.seq || ''} 已同步`);
   } catch (cause) { error.textContent = cause.message; }
   finally { submit.disabled = false; }
 }
@@ -666,10 +652,9 @@ function waitForAnchor(anchor, attempts = 40) {
 }
 
 function setPinMode(mode) {
-  state.pinMode = ['all', 'approved', 'off'].includes(mode) ? mode : 'all';
-  document.querySelectorAll('[data-review-pin-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.reviewPinMode === state.pinMode)));
+  state.pinMode = mode === 'off' ? 'off' : 'all';
+  document.querySelector('[data-review-markers]').checked = state.pinMode !== 'off';
   localStorage.setItem('eva-review-pin-mode', state.pinMode);
-  renderList();
   schedulePins();
 }
 
@@ -679,7 +664,7 @@ function schedulePins() { cancelAnimationFrame(pinFrame); pinFrame = requestAnim
 function renderPins() {
   const layer = document.querySelector('.eva-review-pin-layer'); if (!layer) return;
   layer.innerHTML = '';
-  state.rows.filter(row => isVisiblePin(row, currentPage(), state.pinMode)).forEach(row => {
+  state.rows.filter(row => isVisiblePin(row, currentPage(), state.pinMode) && (state.statusFilter === 'all' || row.status === state.statusFilter)).forEach(row => {
     const target = resolveAnchor(row.anchor); if (!target) return;
     const rect = target.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > innerHeight || rect.right < 0 || rect.left > innerWidth) return;
@@ -735,4 +720,12 @@ ensureUI();
 new MutationObserver(schedulePins).observe(document.getElementById('root') || document.body, { childList:true, subtree:true });
 setInterval(() => { if (!document.hidden && !document.querySelector('.eva-review-panel')?.hidden) refresh({ quiet:true, background:true }); }, 15000);
 setInterval(detectPageChange, 250);
-refresh({ quiet:true, background:true });
+refresh({ quiet:true, background:true }).then(async () => {
+  const id = new URLSearchParams(location.search).get('reviewComment');
+  if (!id) return;
+  const url = new URL(location.href);
+  url.searchParams.delete('reviewComment');
+  history.replaceState(history.state, '', url);
+  const row = state.rows.find(row => row.id === id);
+  if (row) { openPanel(); await locateComment(row.id); }
+});
