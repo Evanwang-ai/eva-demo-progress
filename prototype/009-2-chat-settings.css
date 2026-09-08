@@ -52,3 +52,6 @@ button.eva-chat-setting-row:hover,.eva-chat-settings-head button:hover { backgro
 
 .eva-chat-member-tile .eva-members-ai-identity { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 4px;align-items:center; }
 .eva-chat-member-tile .eva-members-ai-identity > .eva-ai-avatar { grid-column:1 / -1;justify-self:center; }
+/* Subzone details share the GDS group/direct settings shell and spacing. */
+.eva-thread-settings .eva-chat-settings-body { background:var(--eva-surface-subtle); }
+.eva-thread-setting-label i { display:block; margin-top:8px; color:var(--gds-color-text-secondary-accessible); font-size:12px; line-height:16px; font-style:normal; }
