@@ -20,7 +20,7 @@
     const dissolve=id=>{delete state.groups[id];Object.keys(state.threads).filter(t=>state.threads[t]===id).forEach(t=>delete state.threads[t]);};
     const employee=id=>{const a=root.EvaDigitalEmployeesStore?.get(id);return a?{...a,kind:'employee',ai:true,identityAppearance:root.EvaDigitalEmployeesStore.appearance(a)}:null;};
     const employeeRows=s=>(s.employeeIds||[]).map(employee).filter(Boolean);
-    const agentFor=pid=>state.projects[pid]?{id:'project-agent:'+pid,name:'Eva 项目管理专员',kind:'project-agent',ai:true,projectId:pid,cloud:true,removable:false,ownership:'project'}:null;
+    const agentFor=pid=>state.projects[pid]?{id:'project-agent:'+pid,name:'Eva 项目管理专员',kind:'project-agent',ai:true,projectId:pid,cloud:true,removable:false,ownership:'project',identityAppearance:root.EvaAIIdentity?.projectAgentAppearance(projectInfo(pid))}:null;
     const agentIn=id=>{id=state.threads[id]||id;return agentFor(id.startsWith('all:')?id.slice(4):projectId(id));};
     const projectInfo=pid=>({...state.projects[pid],...resolveProjectInfo?.(pid)});
     const agentSender=pid=>{const agent=agentFor(pid);return {...agent,uid:agent.id,color:'#1563EB'};};
@@ -164,7 +164,7 @@
       messagesFor(id,uid){
         if(!api.canRead(id,uid))return [];
         const candidates=[{name:'@所有人',uid:'all'},{name:'@全体成员',uid:'all'},...api.groupMembers(id).map(m=>({name:'@'+m.name,uid:m.id}))];
-        return JSON.parse(JSON.stringify(state.messages[id]||[])).map(m=>({...m,mentions:[...(m.mentions||[]),...candidates.filter(c=>m.text?.includes(c.name)&&!m.mentions?.some(x=>x.name===c.name))],sender:m.sender?.kind==='project-agent'?{...m.sender,identityAppearance:root.EvaAIIdentity?.projectAgentAppearance()}:m.sender}));
+        return JSON.parse(JSON.stringify(state.messages[id]||[])).map(m=>({...m,mentions:[...(m.mentions||[]),...candidates.filter(c=>m.text?.includes(c.name)&&!m.mentions?.some(x=>x.name===c.name))],sender:m.sender?.kind==='project-agent'?{...m.sender,identityAppearance:root.EvaAIIdentity?.projectAgentAppearance(m.sender.projectId&&state.projects[m.sender.projectId]?projectInfo(m.sender.projectId):undefined)}:m.sender}));
       },
       mentionCandidates(id){return api.groupMembers(state.threads[id]||id).filter(p=>p.kind==='human');},
       members(id){const s=scope(id);return [...s.humans.map(m=>({...person(m.id),...m,kind:'human'})),...s.cloneIds.map(cid=>({...clone(cid),kind:'clone'})),...employeeRows(s),...(agentIn(id)?[agentIn(id)]:[])];},
@@ -173,7 +173,7 @@
       channels(pid,uid,base=[]){pid=pid||null;
         if(pid&&!api.canRead(pid,uid))return [];
         const p=state.projects[pid];
-        const view=(g,id,isAll)=>{const original=base.find(c=>c.id===id)||{};return {...original,id,name:isAll?'全员群':g.name,lastAt:original.lastAt||root.__EVA_DEMO_TIME?.T1||'2026-09-02T10:00:00+08:00',color:original.color||'var(--semi-color-primary)',unread:original.unread||0,threads:[...(original.threads||[]).map(t=>({...t,...state.threadDetails[t.id]})),...Object.entries(state.threads).filter(([tid,gid])=>gid===id&&state.threadDetails[tid]&&!(original.threads||[]).some(t=>t.id===tid)).map(([tid])=>state.threadDetails[tid])].filter(t=>!t.deleted).map(t=>({...t,updated_at:t.updated_at||t.created_at||root.__EVA_DEMO_TIME?.T1||'2026-09-02T10:00:00+08:00'})),members:g.humans.length+g.cloneIds.length+(g.employeeIds||[]).length+(p?1:0),systemAICount:p?1:0,humanCount:g.humans.length,cloneCount:g.cloneIds.length,employeeCount:(g.employeeIds||[]).length,allMembers:isAll,projectId:pid};};
+        const view=(g,id,isAll)=>{const original=base.find(c=>c.id===id)||{};return {...original,id,name:isAll?'全员群':g.name,lastAt:original.lastAt||root.__EVA_DEMO_TIME?.T1||'2026-09-02T10:00:00+08:00',color:root.EvaProjectAppearance&&p?root.EvaProjectAppearance.get(projectInfo(pid)).accent:original.color||'var(--semi-color-primary)',unread:original.unread||0,threads:[...(original.threads||[]).map(t=>({...t,...state.threadDetails[t.id]})),...Object.entries(state.threads).filter(([tid,gid])=>gid===id&&state.threadDetails[tid]&&!(original.threads||[]).some(t=>t.id===tid)).map(([tid])=>state.threadDetails[tid])].filter(t=>!t.deleted).map(t=>({...t,updated_at:t.updated_at||t.created_at||root.__EVA_DEMO_TIME?.T1||'2026-09-02T10:00:00+08:00'})),members:g.humans.length+g.cloneIds.length+(g.employeeIds||[]).length+(p?1:0),systemAICount:p?1:0,humanCount:g.humans.length,cloneCount:g.cloneIds.length,employeeCount:(g.employeeIds||[]).length,allMembers:isAll,projectId:pid};};
         return [...(p?[view(p,'all:'+pid,true)]:[]),...Object.values(state.groups).filter(g=>g.projectId===pid&&api.canRead(g.id,uid)).map(g=>view(g,g.id,false))];
       },
       conversationContext(id,uid){
@@ -181,7 +181,7 @@
         const pid=state.projects[sid]?sid:state.groups[sid]?.projectId;
         if(!pid||!api.canRead(id,uid)||!api.canRead(pid,uid))return null;
         const name=projectInfo(pid).name||'',groupName=gid.startsWith('all:')?'全员群':state.chatSettings[gid]?.name||state.groups[gid]?.name||'';
-        return {projectId:pid,projectName:name,groupId:gid,groupName,path:state.threads[id]?[name,groupName].filter(Boolean).join(' / '):name};
+        return {projectId:pid,colorKey:root.EvaProjectAppearance?.keyFor(projectInfo(pid)),projectName:name,groupId:gid,groupName,path:state.threads[id]?[name,groupName].filter(Boolean).join(' / '):name};
       },
       candidates(id,uid){const s=writable(id);if(!member(id,uid))fail('请先加入');return state.people.filter(p=>p.active!==false&&!member(id,p.id)&&(!s.projectId||member(s.projectId,p.id)));},
       addMember(id,uid,target){
@@ -257,6 +257,44 @@
       saved.seededOrgGroups=true;
       for(const g of orgChannels){saved.groups[g.id]={id:g.id,name:g.name,projectId:null,ownerId:'u-wangyilin',humans:[{id:'u-wangyilin',role:'member'}],cloneIds:[]};for(const t of g.threads||[])saved.threads[t.id]=g.id;}
     }
+    // One-time additive fixture migration; do not recreate removed demo groups.
+    const driveDemo=root.__EVA_DRIVE_CHAT_DEMO,driveProject=saved.projects['drive-design'];
+    if(driveDemo&&driveProject&&!saved.seededDriveDiscussionV1){
+      saved.messages||={};saved.threadDetails||={};
+      for(const g of driveDemo){
+        if(saved.groups[g.id])continue;
+        const humans=driveProject.humans.map(p=>({id:p.id,role:'member'}));
+        saved.groups[g.id]={id:g.id,name:g.name,projectId:'drive-design',ownerId:driveProject.ownerId,humans,cloneIds:[],employeeIds:[]};
+        for(const t of g.threads||[]){saved.threads[t.id]=g.id;saved.threadDetails[t.id]={status:1,...t,created_at:root.__EVA_DEMO_TIME?.T1};}
+        for(const [id,messages] of Object.entries(g.messages))saved.messages[id]=messages.filter(m=>humans.some(p=>p.id===m.sender.uid)).map(m=>({...m,sender:{...saved.people.find(p=>p.id===m.sender.uid),...m.sender}}));
+      }
+      saved.seededDriveDiscussionV1=true;
+    }
+    if(!saved.officialGroupConsolidationV1){
+      const retired=new Set(['c-official-announcements','c-official-feedback','c-official-community']);
+      for(const [id,parent] of Object.entries(saved.threads||{})){if(retired.has(parent)){delete saved.threads[id];delete saved.threadDetails?.[id];delete saved.messages?.[id];}}
+      for(const id of retired){delete saved.groups[id];delete saved.messages?.[id];delete saved.chatSettings?.[id];}
+      if(saved.groups['official-community']?.name==='用户反馈与开发交流')saved.groups['official-community'].name='用户使用反馈与开发交流';
+      saved.officialGroupConsolidationV1=true;
+    }
+    const officialDemo=root.__EVA_OFFICIAL_COMMUNITY_DEMO,officialProject=saved.projects.official;
+    if(officialDemo&&officialProject&&!saved.seededOfficialCommunityV1){
+      for(const id of officialDemo.humans){if(saved.people.some(p=>p.id===id&&p.active!==false)&&!officialProject.humans.some(p=>p.id===id))officialProject.humans.push({id,role:'member'});}
+      const cloneIds=officialDemo.cloneIds.filter(id=>saved.clones.some(c=>c.id===id&&c.active!==false&&officialProject.humans.some(p=>p.id===c.ownerId)));
+      officialProject.cloneIds=[...new Set([...officialProject.cloneIds,...cloneIds])];
+      if(!saved.groups[officialDemo.id]){
+        saved.groups[officialDemo.id]={id:officialDemo.id,name:officialDemo.name,projectId:'official',ownerId:officialProject.ownerId,humans:officialProject.humans.map(p=>({id:p.id,role:'member'})),cloneIds};
+        saved.messages||={};saved.threadDetails||={};
+        for(const t of officialDemo.threads){saved.threads[t.id]=officialDemo.id;saved.threadDetails[t.id]={status:1,...t,created_at:root.__EVA_DEMO_TIME?.T1};}
+        for(const [id,messages] of Object.entries(officialDemo.messages))saved.messages[id]=messages.map((m,index)=>{
+          const {senderId,...message}=m;
+          const sender=senderId==='project-agent:official'?{id:senderId,uid:senderId,name:'Eva 项目管理专员',kind:'project-agent',ai:true,projectId:'official'}:saved.people.find(p=>p.id===senderId)||saved.clones.find(p=>p.id===senderId);
+          return {...message,fixtureId:'official-community-v1:'+id+':'+index,sender:{...sender,uid:senderId,...(cloneIds.includes(senderId)?{ai:true}: {})}};
+        });
+      }
+      saved.seededOfficialCommunityV1=true;
+    }
+    for(const t of officialDemo?.threads||[]){const existing=saved.threadDetails?.[t.id];if(existing&&existing.status==null&&!existing.deleted)existing.status=1;}
     // Reconcile only retired demo defaults; preserve user-edited names and active flags.
     for(const [id,oldName] of [['b-wangyilin','王宜林的分身'],['clone-linxiao','林晓的分身'],['clone-hejing','何静的分身']]){
       const c=saved.clones?.find(c=>c.id===id),seed=root.__EVA_MEMBERSHIP_CLONES?.find(c=>c.id===id);
@@ -265,17 +303,22 @@
     // Import the former project-directory preference once. Future pin changes
     // are owned by the member store and shared with the follow list.
     if(!saved.pinnedProjects){
-      let ids=['prod'];
+      let ids=['prod','drive-design','official','lab'];
       try{
         const raw=root.localStorage.getItem('eva:pinned-project-ids:v3');
         const legacy=raw===null?root.localStorage.getItem('eva:pinned-project-ids:v2'):null;
-        const value=JSON.parse(raw??legacy??'["prod"]');
+        const value=JSON.parse(raw??legacy??'["prod","drive-design","official","lab"]');
         ids=Array.isArray(value)?value.slice(0,6):ids;
-        if(raw===null&&ids.length===1&&ids[0]==='drive-design')ids=['prod'];
+        if(raw===null&&ids.length===1&&ids[0]==='drive-design')ids=['prod','drive-design','official','lab'];
       }catch{}
       saved.pinnedProjects={'u-wangyilin':ids};
     }
     const store=create(saved,state=>{try{root.localStorage.setItem(key,JSON.stringify(state));}catch{}},resolveProjectInfo);
+    root.EvaAvatar?.setGroupAppearanceResolver(id=>{
+      const context=store.conversationContext(id,store.snapshot().actorId);
+      const settings=store.snapshot().chatSettings[context?.groupId||id];
+      return {avatar:settings?.avatar,project:context};
+    });
     store.seedSupplyChatContent();store.seedProjectAgents();return store;
   }
   root.EvaMembership=Object.freeze({create,bootstrap});
