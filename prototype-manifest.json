@@ -166,7 +166,7 @@
       "name": "settings-usage",
       "role": "prototype",
       "order": 20,
-      "bytes": 6052
+      "bytes": 6198
     },
     {
       "file": "prototype/049-loop-task-create.js",
@@ -558,7 +558,7 @@
       "name": "settings-usage-style",
       "role": "prototype",
       "order": 69,
-      "bytes": 6916
+      "bytes": 8599
     },
     {
       "file": "prototype/049-loop-task-create.css",
