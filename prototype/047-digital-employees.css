@@ -48,12 +48,12 @@
 .eva-digital-dialog .semi-modal-footer{margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--semi-color-border)}
 .eva-digital-dialog .semi-modal-footer .eva-picker-footer{margin:0;padding:0;border:0;justify-content:flex-end}
 
-/* Five entry points: personal identities above, shared capabilities below. */
+/* POC creator catalog: personal assistant and unavailable cloud persona. */
 .eva-creator-catalog { padding: var(--eva-space-8); }
 .eva-creator-catalog > .eva-digital-center__head { margin-bottom: 24px; }
 .eva-creator-grid--self { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .eva-creator-grid--public { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.eva-creator-card { gap: var(--eva-space-3); padding: var(--eva-space-5); border-radius: var(--eva-radius-panel); border-color: var(--eva-border-subtle); }
+.eva-creator-card { gap: var(--eva-space-6); padding: var(--eva-space-5); border-radius: var(--eva-radius-panel); border-color: var(--eva-border-subtle); }
 .eva-creator-card__heading { display: flex; align-items: center; gap: 10px; }
 .eva-creator-card__heading h3 { margin: 0; font: var(--eva-fw-medium) 16px/24px var(--eva-font-sans); }
 .eva-creator-card p { margin: 0; }
@@ -71,7 +71,7 @@
 .eva-digital-center__modal .semi-portal { pointer-events: auto; }
 
 /* Creator workspace: shared GDS scale with a readable 776px configuration column.
-   The two identity cards and three integration cards retain their business grouping. */
+   The POC catalog exposes only the two personal identity cards. */
 .eva-creator-workspace { font: 400 14px/22px var(--eva-font-sans); }
 .eva-creator-workspace h1 { font: 600 16px/24px var(--eva-font-sans); }
 .eva-creator-workspace p { color: var(--eva-text-secondary-accessible); line-height: 22px; }
