@@ -317,7 +317,7 @@
       "tag": "script",
       "name": "runtime-patch-automation",
       "file": "prototype/009-8-patch-automation.js",
-      "bytes": 12604,
+      "bytes": 12792,
       "role": "build-input"
     },
     {
