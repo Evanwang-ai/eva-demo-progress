@@ -53,7 +53,7 @@
 .eva-creator-catalog > .eva-digital-center__head { margin-bottom: 24px; }
 .eva-creator-grid--self { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .eva-creator-grid--public { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.eva-creator-card { gap: var(--eva-space-6); padding: var(--eva-space-5); border-radius: var(--eva-radius-panel); border-color: var(--eva-border-subtle); }
+.eva-creator-card { gap: var(--eva-space-3); padding: var(--eva-space-5); border-radius: var(--eva-radius-panel); border-color: var(--eva-border-subtle); }
 .eva-creator-card__heading { display: flex; align-items: center; gap: 10px; }
 .eva-creator-card__heading h3 { margin: 0; font: var(--eva-fw-medium) 16px/24px var(--eva-font-sans); }
 .eva-creator-card p { margin: 0; }
