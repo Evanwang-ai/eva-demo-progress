@@ -310,6 +310,7 @@
     source=root.__evaCut(source,'listComments=rt=>{const ct=', 'listComments=rt=>{if(!rt||!issuesOf().some(issue=>issue.id===rt))return Promise.resolve([]);const ct=', '评论限制当前项目任务');
     source=root.__evaCut(source,'listChildren=rt=>Promise.resolve(issuesOf().filter(ct=>ct.parent_issue_id===rt))','listChildren=rt=>Promise.resolve(rt&&issuesOf().some(issue=>issue.id===rt)?issuesOf().filter(ct=>ct.parent_issue_id===rt):[])','子任务限制当前项目父任务');
     source=root.__evaCut(source,'listTimeline().then(no=>{Wi()&&sr(no)})','listTimeline(rt).then(no=>{Wi()&&sr(no)})','任务动态明确任务ID');
+    source=root.__evaCut(source,'const sa=skillSource();return React.createElement("div",{className:"loop-sd"}', 'const sa=["github","local","workspace"].includes(mt.source_type)?mt.source_type:"workspace";return React.createElement("div",{className:"loop-sd"}', '技能来源读取元数据而非异步内容请求');
     return source;
   });
 })(window);

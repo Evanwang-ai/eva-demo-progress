@@ -301,7 +301,7 @@
       "tag": "script",
       "name": "runtime-patch-general",
       "file": "prototype/009-6-patch-general.js",
-      "bytes": 64341,
+      "bytes": 64680,
       "role": "build-input"
     },
     {
