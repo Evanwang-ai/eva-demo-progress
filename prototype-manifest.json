@@ -237,7 +237,7 @@
       "tag": "style",
       "name": "009-3-identity-card",
       "file": "prototype/009-3-identity-card.css",
-      "bytes": 3213,
+      "bytes": 3265,
       "role": "prototype"
     },
     {
@@ -253,7 +253,7 @@
       "tag": "style",
       "name": "chat-settings-style",
       "file": "prototype/009-2-chat-settings.css",
-      "bytes": 5198,
+      "bytes": 6108,
       "role": "prototype"
     },
     {
@@ -269,7 +269,7 @@
       "tag": "link",
       "name": "membership-style",
       "file": "prototype/009-2-members.css",
-      "bytes": 11978,
+      "bytes": 12015,
       "role": "prototype"
     },
     {
