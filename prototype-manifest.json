@@ -405,7 +405,7 @@
       "tag": "script",
       "name": "mode-layer",
       "file": "prototype/020-mode-layer.js",
-      "bytes": 74457,
+      "bytes": 80515,
       "role": "prototype"
     },
     {
@@ -677,7 +677,7 @@
       "tag": "style",
       "name": "050-file-library-styles",
       "file": "prototype/050-file-library.css",
-      "bytes": 34933,
+      "bytes": 40597,
       "role": "prototype"
     },
     {
