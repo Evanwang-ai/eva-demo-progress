@@ -147,6 +147,7 @@ body.eva-message-hierarchy-ready .eva-drive__actions,
 .eva-drive__actions {
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -304,8 +305,16 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
 .eva-drive__row {
   min-width: 900px;
   box-sizing: border-box;
-  grid-template-columns: minmax(250px, 1.45fr) 104px minmax(190px, 1.05fr) 76px 124px 36px;
+  grid-template-columns: minmax(250px, 1.45fr) 104px minmax(190px, 1.05fr) 76px 124px 72px;
   gap: 14px;
+}
+
+body.eva-message-hierarchy-ready .eva-drive__table--pinned .eva-drive__table-head,
+body.eva-message-hierarchy-ready .eva-drive__table--pinned .eva-drive__row,
+.eva-drive__table--pinned .eva-drive__table-head,
+.eva-drive__table--pinned .eva-drive__row {
+  min-width: 1100px;
+  grid-template-columns: minmax(230px, 1.25fr) minmax(180px, .9fr) 104px minmax(180px, 1fr) 76px 124px 72px;
 }
 
 .eva-drive__table-head {
@@ -349,6 +358,15 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
 .eva-drive__file-mark.is-shortcut {
   color: #315b92;
   background: #edf4ff;
+}
+
+.eva-drive__file-mark.is-external-link {
+  color: var(--gds-color-action-primary, #1563eb);
+  background: rgb(21 99 235 / 8%);
+}
+
+.eva-relation-chip.is-external {
+  color: var(--gds-color-action-primary, #1563eb);
 }
 
 .eva-drive__file-mark.is-shortcut::after {
@@ -516,7 +534,8 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
   font-size: 11px;
 }
 
-.eva-drive__row-more {
+.eva-drive__row-more,
+.eva-drive__pin-button {
   width: 28px;
   min-width: 32px;
   height: 32px;
@@ -535,16 +554,50 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
   background: var(--gds-color-overlay-hover, rgb(0 0 0 / 5%));
 }
 
-.eva-drive__row-more .eva-drive-icon {
+.eva-drive__row-more .eva-drive-icon,
+.eva-drive__pin-button .eva-drive-icon {
   width: 18px;
   height: 18px;
 }
 
+.eva-drive__pin-button {
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.eva-drive__row:hover .eva-drive__pin-button,
+.eva-drive__row:focus-within .eva-drive__pin-button,
+.eva-drive__pin-button.is-pinned,
+.eva-drive__pin-button:focus-visible {
+  opacity: 1;
+}
+
+.eva-drive__pin-button:hover,
+.eva-drive__pin-button:focus-visible {
+  background: var(--gds-color-overlay-hover);
+}
+
+.eva-drive__pin-button.is-pinned {
+  color: var(--eva-action-primary);
+}
+
+.eva-drive__pin-button.is-pinned .eva-drive-icon {
+  fill: currentColor;
+}
+
+.eva-drive__pin-button:focus-visible,
+.eva-drive__row-more:focus-visible {
+  outline: 2px solid var(--eva-border-focus);
+  outline-offset: 2px;
+}
+
 .eva-drive__row-actions {
   position: relative;
-  width: 32px;
+  width: 68px;
   height: 32px;
-  display: block !important;
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
   overflow: visible !important;
 }
 
@@ -1637,6 +1690,26 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
   font: inherit;
 }
 
+.eva-external-link-warning {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--semi-color-warning-light-active, #f0d79a);
+  border-radius: var(--gds-radius-control, 8px);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--gds-color-text-secondary, #4a4a4a);
+  background: var(--semi-color-warning-light-default, #fff7e6);
+  font-size: var(--gds-type-caption-font-size, 12px);
+  line-height: 18px;
+}
+
+.eva-external-link-warning .eva-drive-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
 .eva-drive-dialog__field textarea {
   min-height: 80px;
   padding: 9px 10px;
@@ -2052,6 +2125,7 @@ body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
   min-height: 58px;
   padding: 12px 24px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -2207,12 +2281,24 @@ body.eva-message-hierarchy-ready .eva-project-files__table {
     display: none;
   }
 
+  .eva-project-files__toolbar .eva-drive__side-search {
+    width: 100%;
+    margin-left: 0;
+  }
+
   body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__table-head,
   body.eva-message-hierarchy-ready .eva-drive__table--with-source .eva-drive__row,
   .eva-drive__table-head,
   .eva-drive__row {
-    grid-template-columns: minmax(210px, 1.4fr) 88px minmax(145px, .9fr) 62px 108px 32px;
+    grid-template-columns: minmax(210px, 1.4fr) 88px minmax(145px, .9fr) 62px 108px 68px;
     gap: 10px;
+  }
+
+  body.eva-message-hierarchy-ready .eva-drive__table--pinned .eva-drive__table-head,
+  body.eva-message-hierarchy-ready .eva-drive__table--pinned .eva-drive__row,
+  .eva-drive__table--pinned .eva-drive__table-head,
+  .eva-drive__table--pinned .eva-drive__row {
+    grid-template-columns: minmax(210px, 1.25fr) minmax(160px, .9fr) 88px minmax(145px, .9fr) 62px 108px 68px;
   }
 }
 
@@ -2225,3 +2311,4 @@ body.eva-message-hierarchy-ready .eva-project-files__table {
 .eva-drive-dialog__field span { font: 500 14px/22px var(--eva-font-sans); color: var(--eva-text-primary); }
 .eva-drive-dialog__field :is(input,select,textarea):focus-visible { outline: 2px solid var(--eva-border-focus); outline-offset: 2px; }
 .eva-drive__meta :is(dt,dd) { font: 400 12px/16px var(--eva-font-sans); }
+@media (prefers-reduced-motion: reduce) { .eva-drive__inspector, .eva-drive__pin-button { transition: none; } }
