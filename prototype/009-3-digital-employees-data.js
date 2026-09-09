@@ -11717,8 +11717,7 @@ window.__EVA_DIGITAL_EMPLOYEES_DATA = {
         "basic",
         "persona",
         "skills",
-        "conn",
-        "mem"
+        "conn"
       ]
     },
     {
