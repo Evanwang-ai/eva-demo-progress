@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {menuOf, filterRows, buildDeveloperPrompt, prototypeLink} from '../review/developer-domain.mjs';
+import {menuOf, filterRows, visibleDeveloperRows, buildDeveloperPrompt, prototypeLink} from '../review/developer-domain.mjs';
 import {createCommentsStore} from '../review/comments-store.mjs';
 import {runCommentsCommand} from '../tools/comments-cli.mjs';
 const id='aaaaaaaa-1111-4111-8111-111111111111';
@@ -25,4 +25,28 @@ test('claim sends one atomic batch RPC and validates empty names before requests
 test('CLI can fetch selected IDs and claim without changing approval itself',async()=>{
  let captured;await runCommentsCommand(['list','--ids',id],{store:{list:async(...args)=>{captured=args;return[];}},write:()=>{}});assert.deepEqual(captured,[undefined,[id]]);
  await runCommentsCommand(['claim','--ids',id,'--author','甲'],{store:{claim:async(...args)=>{captured=args;return[];}},write:()=>{}});assert.deepEqual(captured,[[id],'甲',false]);
+});
+test('column filters intersect exact names and kind while preserving incoming order',()=>{
+ const rows=[{...row,id:'c',author_name:'甲',claimed_by:'乙'}, {...row,id:'b',author_name:'甲乙',claimed_by:'乙'}, {...row,id:'a',author_name:'甲',claimed_by:null}, {...row,id:'d',author_name:'甲',claimed_by:'乙',kind:'ui'}];
+ assert.deepEqual(filterRows(rows,{kind:'function',author:'name:甲',claim:'name:乙'}).map(r=>r.id),['c']);
+ assert.deepEqual(filterRows(rows,{author:'name:甲',claim:'unclaimed'}).map(r=>r.id),['a']);
+ assert.deepEqual(filterRows(rows,{claim:'claimed'}).map(r=>r.id),['c','b','d']);
+ assert.deepEqual(filterRows(rows,{author:'name:不存在'}),[]);
+ assert.deepEqual(filterRows(rows).map(r=>r.id),['c','b','a','d']);
+});
+
+test('status changes retain the edited row at its original position until explicit filtering',()=>{
+ const rows=[{...row,id:'before'}, {...row,id:'edited',status:'done',claimed_by:'Codex'}, {...row,id:'after'}];
+ const filters={status:'approved',claim:'unclaimed'};
+ assert.deepEqual(visibleDeveloperRows(rows,filters,new Set(['edited'])).map(r=>r.id),['before','edited','after']);
+ assert.deepEqual(visibleDeveloperRows(rows,filters).map(r=>r.id),['before','after']);
+ assert.deepEqual(visibleDeveloperRows(rows,{status:'done',claim:'all'}).map(r=>r.id),['edited']);
+ assert.deepEqual(visibleDeveloperRows(rows,{}).map(r=>r.id),['before','edited','after']);
+});
+
+test('personal menus use exact shared signature and include completed records',()=>{
+ const rows=[{...row,id:'a',claimed_by:'Alice',author_name:'Bob',status:'done'},{...row,id:'b',claimed_by:'Bob',author_name:'Alice'}];
+ assert.deepEqual(filterRows(rows,{menu:'mine-claimed',actor:'Alice'}).map(r=>r.id),['a']);
+ assert.deepEqual(filterRows(rows,{menu:'mine-authored',actor:'Alice'}).map(r=>r.id),['b']);
+ assert.deepEqual(filterRows(rows,{menu:'mine-claimed',actor:''}),[]);
 });

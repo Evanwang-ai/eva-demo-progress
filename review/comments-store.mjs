@@ -86,14 +86,23 @@ export function createCommentsStore({ url, key, fetchImpl = fetch }) {
     async updateStatus(id, status, author) {
       if (!STATUSES.has(status)) throw new Error('不支持的批注状态');
       const name = String(author || '').trim();
-      if (!name || name === DEFAULT_AUTHOR || name.length > 40) throw new Error('请先填写 1–40 字的操作人姓名，修改状态将同时认领');
+      if (!name || name === DEFAULT_AUTHOR || name.length > 40) throw new Error('请先填写 1–40 字的操作人姓名');
       const query = new URLSearchParams({ id: `eq.${validId(id)}` });
+      const changes = { status };
+      if (status === 'doing' || status === 'done') {
+        const current = (await this.list(undefined, [id]))[0];
+        if (!current) throw new Error('批注不存在或不可访问');
+        if (current.claimed_by && current.claimed_by !== name) throw new Error('该批注已由其他人认领，请先核对负责人');
+        // Compare-and-set prevents a concurrent claim from being overwritten.
+        query.set('claimed_by', current.claimed_by ? `eq.${name}` : 'is.null');
+        if (!current.claimed_by) Object.assign(changes, { claimed_by:name, claimed_at:new Date().toISOString() });
+      }
       const rows = await request(`${endpoint}?${query}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=representation' },
-        body: JSON.stringify({ status, claimed_by: name, claimed_at: new Date().toISOString() }),
+        body: JSON.stringify(changes),
       });
-      if (!rows[0]) throw new Error('批注不存在或没有更新权限');
+      if (!rows[0]) throw new Error('批注已被他人认领、已删除或没有更新权限，请检查更新');
       return rows[0];
     },
     async addReply(commentId, reply) {
