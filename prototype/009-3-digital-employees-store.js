@@ -1,13 +1,28 @@
 (function(root){
   'use strict';
   const seed=root.__EVA_DIGITAL_EMPLOYEES_DATA, key='eva:digital-employees:v1';
+  const expertAliases=new Map([
+    ['HR 助手','HR 入职服务专家'],['HR 助手专家','HR 入职服务专家'],
+    ['会议纪要清洗','会议纪要专家'],['会议纪要清洗专家','会议纪要专家'],
+    ['取数小工','数据提取专家'],['取数小工专家','数据提取专家'],
+    ['交互稿自查','交互稿审查专家'],['交互稿自查专家','交互稿审查专家'],
+    ['安全测试用例生成','安全测试专家'],['安全测试用例生成专家','安全测试专家'],
+    ['新人上手问答','新人入职问答专家'],['新人上手问答专家','新人入职问答专家'],
+    ['汇报材料助理','汇报材料专家'],['汇报材料助理专家','汇报材料专家'],
+    ['原型批注跟进','原型批注跟进专家']
+  ]);
+  const expertName=value=>{
+    const name=String(value||'').trim();
+    const aliased=expertAliases.get(name)||name;
+    return (aliased.endsWith('专家')?aliased:aliased.replace(/专家/g,'')+'专家').replace(/\s+专家$/,'专家');
+  };
   let saved;try{saved=JSON.parse(root.localStorage.getItem(key));}catch{}
   let state={agents:seed.agents, drafts:{}, personaRequests:[], chats:{}, teamIds:[],...saved};
   // Add newly shipped organization employees without replacing local creations or edits.
   const hrOnboardingSeed=seed.agents.find(a=>a.id==='a_hr_onboarding');
   if(hrOnboardingSeed&&!state.agents.some(a=>a.id===hrOnboardingSeed.id))state.agents=[...state.agents,{...hrOnboardingSeed}];
   // Remove the retired employee from existing local demo state as well as the seed.
-  state.agents=state.agents.filter(a=>a.id!=='s_AS00139');
+  state.agents=state.agents.filter(a=>a.id!=='s_AS00139').map(a=>a.kind==='staff'?{...a,name:expertName(a.name)}:a);
   state.teamIds=state.teamIds.filter(id=>id!=='s_AS00139');
   delete state.chats.s_AS00139;
   try{root.localStorage.setItem(key,JSON.stringify(state));}catch{}
@@ -45,7 +60,7 @@
     session.messages.push({kind:'text',sender:{uid:'u-wangyilin',name:'王宜林'},time,text},{kind:'text',sender:{uid:id,name:a.name,ai:true,identityAppearance:appearance(a)},time,text:a.presence==='offline'?'【原型】已排队，待数字员工上线后处理。':'【原型】已收到请求，后续由 '+a.name+' 的服务处理。当前未调用真实服务。'});
     session.draft='';session.updatedAt=now();publish();return true;
   };
-  const appearance=a=>({name:a.name,sourceName:'Eva',avatar:a.avatar||root.__EVA_COLLEAGUE_PORTRAIT,logo:root.__EVA_COLLEAGUE_PORTRAIT});
+  const appearance=a=>({name:a.name,sourceName:'Eva',avatar:a.avatar||'prototype/assets/project-agent-bot.svg',logo:'prototype/assets/project-agent-bot.svg'});
   const demoSession=(id,a,story,index)=>{
     const title=Array.isArray(story)?story[0]:story.title;
     const updatedAt=Array.isArray(story)?'2026-09-06T'+String(9+index).padStart(2,'0')+':10:00Z':story.updatedAt;
@@ -125,7 +140,7 @@
     saveDraft(type,draft){state.drafts[type]=structuredClone(draft);publish();},draft:type=>state.drafts[type],
     create(type,draft){
       const rt=seed.runtimes.find(r=>r.key===type);if(!rt)throw new Error('请选择创建类型');
-      const name=draft.name?.trim();if(!name)throw new Error('请填写名称');
+      const rawName=draft.name?.trim();if(!rawName)throw new Error('请填写名称');const name=expertName(rawName);
       const no='AS'+String(Math.max(518,...state.agents.map(a=>Number(a.no?.replace('AS',''))||0))+1).padStart(5,'0');
       const a={id:'digital:'+no,no,name,kind:type==='team'?'team':'staff',market:'mine',by:'u-wangyilin',creatorName:'王宜林',ownership:type==='mine'?'personal':type==='team'?'project':'organization',domain:draft.domain||'数智化',tier:draft.tier||'small',presence:'online',runtime:type==='dify'?'dify':type==='domain'?'external':'cloud',scope:type==='mine'?'self':type==='team'?'project':draft.publication==='org'?'org':'self',one:draft.one||'',desc:draft.description||'',skills:draft.skills||[],systems:draft.conn||[],configuration:structuredClone(draft),role:draft.role||'记录员',projectId:type==='team'?draft.target:undefined,tagline:type==='mine'?'我建的 · 只有我能拉进群':type==='team'?'项目 AI 助手':type==='dify'?'Dify 工作流 · 我接的':'业务域接入 · 我接的'};
       state.agents=[...state.agents,a];delete state.drafts[type];publish();return a;
