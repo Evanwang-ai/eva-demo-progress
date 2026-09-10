@@ -100,6 +100,8 @@ test('个人 Eva 助理与对话只渲染在路由页中间栏', () => {
   assert.match(imPatch, /roleGroup\('digital','数字员工',digitalEmployees\)/);
   assert.match(imPatch, /className:'eva-ai-team__sidebar-header eva-rail-header'.+h\('h1',null,'我的 Agent'\)/s);
   assert.match(imPatch, /'新建 AI 团队'.+'新建个人助理'/s);
+  assert.match(imPatch, /const openPersonalAssistant=\(\)=>window\.__evaOpenAssistantEditor\?\.\(\{mode:'create',role:'assistant',returnFocus:groupEditorOpener\.current\}\)/);
+  assert.doesNotMatch(imPatch, /evaCreate=mine&evaReturn=/);
   assert.match(imPatch, /sectionTitle\('teams','AI 团队'.+sectionTitle\('assistants','AI 助理'/s);
   assert.match(imPatch, /sectionTitle\('teams','AI 团队'.+Users\)/s);
   assert.match(imPatch, /sectionTitle\('assistants','AI 助理'.+Sparkles\)/s);
@@ -108,7 +110,11 @@ test('个人 Eva 助理与对话只渲染在路由页中间栏', () => {
   assert.match(imPatch, /type:'file',hidden:true,accept:'image\/png,image\/jpeg,image\/webp'/);
   assert.match(imPatch, /const reader=new FileReader\(\)/);
   assert.match(imPatch, /avatar\?'更换团队头像':'上传团队头像'/);
-  assert.doesNotMatch(imPatch, /粘贴头像图片地址/);
+  assert.match(imPatch, /'aria-label':draft\.avatar\?'更换助理头像':'上传助理头像'/);
+  assert.match(imPatch, /className:'eva-editor-avatar-button'.+avatarInput\.current\?\.click\(\)/s);
+  assert.doesNotMatch(imPatch, /头像图片地址|粘贴头像图片地址/);
+  assert.match(imPatch, /if\(persona\)tabs\.push\(\['collaboration','协作'/);
+  assert.doesNotMatch(imPatch, /\['skills','技能'.+\],\['collaboration','协作'/);
   assert.match(imPatch, /className:'eva-ai-team-editor__selected-avatar'.+EvaAIIdentity\.avatar\(item\.appearance,28,h\).+className:'eva-ai-team-editor__selected-name'/s);
   assert.doesNotMatch(read('prototype/046-ai-team.css'), /\.eva-ai-team-editor__selected-item\s*>\s*span/);
   assert.match(imPatch, /teamGroups\.map\(teamGroupItem\)/);
@@ -378,7 +384,7 @@ test('个人仅创建文件夹与对话，移除助理创建和编辑入口', ()
   assert.match(workspace, /window\.EvaPersonal\.renameConversation/);
 });
 
-test('我的 AI 位于个人导航并复用个人助理创建流程', () => {
+test('我的 AI 位于个人导航并以共享编辑弹窗创建个人助理', () => {
   const sider = read('prototype/009-7-patch-sider.js');
   const imPatch = read('prototype/009-5-patch-im.js');
   const creator = read('prototype/047-digital-employees.js');
@@ -395,12 +401,13 @@ test('我的 AI 位于个人导航并复用个人助理创建流程', () => {
   assert.match(sider, /label:rt\.collapsed\?"数字员工":"数字员工市场"/);
   assert.doesNotMatch(sider, /label:"我的 AI"/);
   assert.match(imPatch, /className:'eva-ai-team__sidebar-header eva-rail-header'.+h\('h1',null,'我的 Agent'\)/s);
-  assert.match(imPatch, /evaReturn=%2Fmessages%3FevaIM%3Dmy-ai/);
+  assert.match(imPatch, /const openPersonalAssistant=\(\)=>window\.__evaOpenAssistantEditor\?\.\(\{mode:'create',role:'assistant',returnFocus:groupEditorOpener\.current\}\)/);
+  assert.doesNotMatch(imPatch, /evaReturn=%2Fmessages%3FevaIM%3Dmy-ai/);
   assert.match(sider, /returnTo=evaCreatorParams\.get\("evaReturn"\)/);
   assert.match(creator, /returnTo\?navigate\(returnTo\):navigatePersonal/);
 });
 
-test('Agent 创建中心不显示为一级导航但保留我的 Agent 创建流程', () => {
+test('Agent 创建中心不显示为一级导航且我的 Agent 使用共享编辑弹窗', () => {
   const sider = read('prototype/009-7-patch-sider.js');
   const imPatch = read('prototype/009-5-patch-im.js');
   const creator = read('prototype/047-digital-employees.js');
@@ -408,7 +415,8 @@ test('Agent 创建中心不显示为一级导航但保留我的 Agent 创建流�
   assert.match(sider, /EVA_COMMON_NAV=Object\.freeze\(\["digital-employees"\]\)/);
   assert.doesNotMatch(sider, /EVA_COMMON_NAV=Object\.freeze\([^;]*agent-create/);
   assert.match(sider, /if\(ct==="Agent创建中心"\)return React\.createElement\(EvaDigitalEmployeesPage,\{view:"create"\}\)/);
-  assert.match(imPatch, /navigate\('\/eva-stub\/Agent创建中心\?evaCreate=mine&evaReturn=/);
+  assert.match(imPatch, /const openPersonalAssistant=\(\)=>window\.__evaOpenAssistantEditor\?\.\(\{mode:'create',role:'assistant'/);
+  assert.doesNotMatch(imPatch, /evaCreate=mine&evaReturn=/);
   assert.match(creator, /h\('h1',null,'Agent 创建中心'\)/);
 });
 
